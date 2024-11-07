@@ -23,19 +23,27 @@ func (c *Context) AbortWithError(err error) {
 }
 
 func (c *Context) parse() error {
-	for c.Remaining() != 0 {
+	for c.Remaining() > 0 {
 		if c.abort {
 			break
 		}
+
 		opts, err := c.getOptions(c.args[c.index])
 		if err != nil {
+			if c.parser.unparceable != nil {
+				c.parser.unparceable(c, c.args[c.index])
+				c.index++
+				continue
+			}
 			return err
 		}
+
 		if opts == nil {
 			c.parser.SubParser = c.parser.subparsers[c.args[c.index]]
 			c.index++
 			return c.parser.SubParser.Parse(c.Remain()...)
 		}
+
 		c.index++
 		for i, opt := range opts {
 			if opt.nargs >= 1 && i != len(opts)-1 || c.Remaining() < opt.nargs {
@@ -50,7 +58,7 @@ func (c *Context) parse() error {
 			tmp = append(tmp, c.args[c.index:c.index+opt.nargs]...)
 			opt.callback(c, tmp...)
 			if c.err != nil {
-				return c.err
+				break
 			}
 			c.index += opt.nargs
 		}
@@ -61,29 +69,19 @@ func (c *Context) parse() error {
 func (c *Context) getOptions(val string) ([]*Option, error) {
 	opts := make([]*Option, 0)
 
-	if strings.HasPrefix(val, "--") {
+	if strings.HasPrefix(val, "--") && len(val) > 2 {
 		optname := val[2:]
 		opt, ok := c.parser.opts[optname]
 		if !ok || len(opt.name) == 1 {
-			if c.parser.unparceable != nil {
-				c.parser.unparceable(c, val)
-				return []*Option{}, c.err
-			} else {
-				return nil, fmt.Errorf("option %q is invalid", val)
-			}
+			return nil, fmt.Errorf("unknown option %q", val)
 		}
 		opts = append(opts, opt)
-	} else if strings.HasPrefix(val, "-") {
+	} else if strings.HasPrefix(val, "-") && len(val) > 1 {
 		for i := 1; i < len(val); i++ {
 			optname := val[i : i+1]
 			opt, ok := c.parser.opts[optname]
 			if !ok {
-				if c.parser.unparceable != nil {
-					c.parser.unparceable(c, val)
-					return []*Option{}, c.err
-				} else {
-					return nil, fmt.Errorf("option %q is invalid", val)
-				}
+				return nil, fmt.Errorf("unknown option %q", optname)
 			}
 			opts = append(opts, opt)
 		}
@@ -92,12 +90,7 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 			return nil, nil
 		}
 
-		if c.parser.unparceable != nil {
-			c.parser.unparceable(c, val)
-			return []*Option{}, c.err
-		} else {
-			return nil, fmt.Errorf("could not parse option %q", val)
-		}
+		return nil, fmt.Errorf("could not parse option %q", val)
 	}
 
 	return opts, nil
