@@ -19,7 +19,7 @@ func main() {
 	parser := argparse.New()
 
 	num := 0
-	parser.AddOption("num", 1, intHandler(&num))
+	parser.AddOption(argparse.Option{Name: "num", Nargs: 1, Callback: intHandler(&num)})
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)

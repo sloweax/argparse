@@ -22,9 +22,8 @@ func New() *ArgParser {
 	return a
 }
 
-func (a *ArgParser) AddOption(name string, nargs int, callback func(*Context, ...string)) {
-	opt := &Option{nargs: nargs, callback: callback, name: name}
-	a.opts[name] = opt
+func (a *ArgParser) AddOption(opt Option) {
+	a.opts[opt.Name] = &opt
 }
 
 func (a *ArgParser) Parse(args ...string) error {

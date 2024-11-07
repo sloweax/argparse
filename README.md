@@ -30,18 +30,18 @@ func main() {
 	short := ""
 	long := ""
 
-	parser.AddOption("v", 0, func(ctx *argparse.Context, args ...string) {
+	parser.AddOption(argparse.Option{Name: "v", Callback: func(ctx *argparse.Context, args ...string) {
 		verbose = true
-	})
+	}})
 
-	parser.AddOption("s", 1, func(ctx *argparse.Context, args ...string) {
+	parser.AddOption(argparse.Option{Name: "s", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
 		// args is guaranteed to have length 1
 		short = args[0]
-	})
+	}})
 
-	parser.AddOption("long", 1, func(ctx *argparse.Context, args ...string) {
+	parser.AddOption(argparse.Option{Name: "long", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
 		long = args[0]
-	})
+	}})
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)
@@ -79,17 +79,17 @@ func main() {
 	parser.AddSubParser("del", del_parser)
 
 	prefix := ""
-	parser.AddOption("prefix", 1, func(ctx *argparse.Context, args ...string) {
+	parser.AddOption(argparse.Option{Name: "prefix", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
 		prefix = args[0]
-	})
+	}})
 
 	file := ""
 	file_func := func(ctx *argparse.Context, args ...string) {
 		file = args[0]
 	}
 
-	add_parser.AddOption("f", 1, file_func)
-	del_parser.AddOption("f", 1, file_func)
+	add_parser.AddOption(argparse.Option{Name: "f", Nargs: 1, Callback: file_func})
+	del_parser.AddOption(argparse.Option{Name: "f", Nargs: 1, Callback: file_func})
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)
@@ -128,9 +128,9 @@ func main() {
 
 	foo := ""
 	parser := argparse.New()
-	parser.AddOption("foo", 1, func(ctx *argparse.Context, s ...string) {
-		foo = s[0]
-	})
+	parser.AddOption(argparse.Option{Name: "foo", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
+		foo = args[0]
+	}})
 
 	parser.Unparceable(func(ctx *argparse.Context, arg string) {
 		files = append(files, arg)
@@ -170,7 +170,7 @@ func main() {
 	parser := argparse.New()
 
 	num := 0
-	parser.AddOption("num", 1, intHandler(&num))
+	parser.AddOption(argparse.Option{Name: "num", Nargs: 1, Callback: intHandler(&num)})
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)

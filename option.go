@@ -1,14 +1,14 @@
 package argparse
 
 type Option struct {
-	name     string
-	nargs    int
-	callback func(*Context, ...string)
+	Name     string
+	Nargs    int
+	Callback func(ctx *Context, args ...string)
 }
 
 func (o *Option) String() string {
-	if len(o.name) == 1 {
-		return "-" + o.name
+	if len(o.Name) == 1 {
+		return "-" + o.Name
 	}
-	return "--" + o.name
+	return "--" + o.Name
 }

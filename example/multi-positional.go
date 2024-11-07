@@ -16,9 +16,9 @@ func main() {
 
 	foo := ""
 	parser := argparse.New()
-	parser.AddOption("foo", 1, func(ctx *argparse.Context, s ...string) {
-		foo = s[0]
-	})
+	parser.AddOption(argparse.Option{Name: "foo", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
+		foo = args[0]
+	}})
 
 	parser.Unparceable(func(ctx *argparse.Context, arg string) {
 		files = append(files, arg)

@@ -39,34 +39,34 @@ func TestBasic(t *testing.T) {
 	parser := New()
 
 	short_opt := ""
-	parser.AddOption("s", 1, func(ctx *Context, args ...string) {
+	parser.AddOption(Option{Name: "s", Nargs: 1, Callback: func(ctx *Context, args ...string) {
 		assertEqual(t, len(args), 1)
 		short_opt = args[0]
-	})
+	}})
 
 	long_opt := ""
-	parser.AddOption("long", 1, func(ctx *Context, args ...string) {
+	parser.AddOption(Option{Name: "long", Nargs: 1, Callback: func(ctx *Context, args ...string) {
 		assertEqual(t, len(args), 1)
 		long_opt = args[0]
-	})
+	}})
 
 	short_flag := false
-	parser.AddOption("S", 0, func(ctx *Context, args ...string) {
+	parser.AddOption(Option{Name: "S", Callback: func(ctx *Context, args ...string) {
 		assertEqual(t, len(args), 0)
 		short_flag = true
-	})
+	}})
 
 	long_flag := false
-	parser.AddOption("long-flag", 0, func(ctx *Context, args ...string) {
+	parser.AddOption(Option{Name: "long-flag", Nargs: 0, Callback: func(ctx *Context, args ...string) {
 		assertEqual(t, len(args), 0)
 		long_flag = true
-	})
+	}})
 
 	opt_array := []string{}
-	parser.AddOption("two", 2, func(ctx *Context, args ...string) {
+	parser.AddOption(Option{Name: "two", Nargs: 2, Callback: func(ctx *Context, args ...string) {
 		assertEqual(t, len(args), 2)
 		opt_array = append(opt_array, args...)
-	})
+	}})
 
 	assertError(t, false, parser.Parse("-s", "sval", "--long", "lval", "-S", "--long-flag", "--two", "foo", "bar"))
 
@@ -81,24 +81,24 @@ func TestMultiShort(t *testing.T) {
 	parser := New()
 
 	a := false
-	parser.AddOption("a", 0, func(ctx *Context, args ...string) {
+	parser.AddOption(Option{Name: "a", Callback: func(ctx *Context, args ...string) {
 		a = true
-	})
+	}})
 
 	b := false
-	parser.AddOption("b", 0, func(ctx *Context, args ...string) {
+	parser.AddOption(Option{Name: "b", Callback: func(ctx *Context, args ...string) {
 		b = true
-	})
+	}})
 
 	c := false
-	parser.AddOption("c", 0, func(ctx *Context, args ...string) {
+	parser.AddOption(Option{Name: "c", Callback: func(ctx *Context, args ...string) {
 		c = true
-	})
+	}})
 
 	d := ""
-	parser.AddOption("d", 1, func(ctx *Context, args ...string) {
+	parser.AddOption(Option{Name: "d", Nargs: 1, Callback: func(ctx *Context, args ...string) {
 		d = args[0]
-	})
+	}})
 
 	assertError(t, false, parser.Parse("-abcd", "val"))
 
@@ -113,7 +113,7 @@ func TestMultiShort(t *testing.T) {
 func TestAbort(t *testing.T) {
 	parser := New()
 
-	parser.AddOption("a", 0, func(ctx *Context, args ...string) {})
+	parser.AddOption(Option{Name: "a"})
 
 	rest := make([]string, 0)
 	parser.Unparceable(func(ctx *Context, s string) {
@@ -127,7 +127,7 @@ func TestAbort(t *testing.T) {
 	assertSliceEqual(t, []string{"-b", "-c"}, rest)
 
 	edited := false
-	parser.AddOption("long", 1, func(ctx *Context, s ...string) {})
+	parser.AddOption(Option{Name: "long", Nargs: 1})
 	parser.Unparceable(func(ctx *Context, s string) {
 		ctx.Abort()
 		assertEqual(t, s, "-long")
@@ -141,7 +141,7 @@ func TestAbort(t *testing.T) {
 
 func TestUnparceable(t *testing.T) {
 	parser := New()
-	parser.AddOption("a", 0, func(ctx *Context, s ...string) {})
+	parser.AddOption(Option{Name: "a"})
 
 	edited := 0
 	parser.Unparceable(func(ctx *Context, s string) {
@@ -164,7 +164,7 @@ func TestUnparceable(t *testing.T) {
 	assertEqual(t, edited, 4)
 
 	edited = 0
-	parser.AddOption("m", 2, func(ctx *Context, s ...string) {})
+	parser.AddOption(Option{Name: "m", Nargs: 2})
 	parser.Unparceable(func(ctx *Context, s string) {
 		asserts := []string{"-am", "1"}
 		assertEqual(t, asserts[edited], s)
@@ -181,19 +181,19 @@ func TestSubParser(t *testing.T) {
 	ssparser := New()
 
 	edited := 0
-	parser.AddOption("a", 0, func(ctx *Context, s ...string) {
+	parser.AddOption(Option{Name: "a", Callback: func(ctx *Context, args ...string) {
 		edited = 0
-	})
+	}})
 
 	parser.AddSubParser("sub", sparser)
 
-	sparser.AddOption("b", 0, func(ctx *Context, s ...string) {
+	sparser.AddOption(Option{Name: "b", Callback: func(ctx *Context, args ...string) {
 		edited++
-	})
+	}})
 
-	sparser.AddOption("a", 0, func(ctx *Context, s ...string) {
+	sparser.AddOption(Option{Name: "a", Callback: func(ctx *Context, args ...string) {
 		edited++
-	})
+	}})
 
 	assertError(t, false, parser.Parse("-a", "sub", "-b", "-a"))
 	assertEqual(t, edited, 2)
@@ -201,13 +201,13 @@ func TestSubParser(t *testing.T) {
 
 	sparser.AddSubParser("subsub", ssparser)
 
-	ssparser.AddOption("a", 0, func(ctx *Context, s ...string) {
+	ssparser.AddOption(Option{Name: "a", Callback: func(ctx *Context, args ...string) {
 		edited--
-	})
+	}})
 
-	ssparser.AddOption("b", 0, func(ctx *Context, s ...string) {
+	ssparser.AddOption(Option{Name: "b", Callback: func(ctx *Context, args ...string) {
 		edited--
-	})
+	}})
 
 	assertError(t, false, parser.Parse("-a", "sub", "-b", "-a", "subsub", "-a", "-b"))
 	assertEqual(t, edited, 0)

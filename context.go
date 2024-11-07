@@ -46,21 +46,23 @@ func (c *Context) parse() error {
 
 		c.index++
 		for i, opt := range opts {
-			if opt.nargs >= 1 && i != len(opts)-1 || c.Remaining() < opt.nargs {
+			if opt.Nargs >= 1 && i != len(opts)-1 || c.Remaining() < opt.Nargs {
 				if c.parser.unparceable != nil {
 					c.parser.unparceable(c, c.args[c.index-1])
 					break
 				} else {
-					return fmt.Errorf("option %q requires %d arguments", opt.String(), opt.nargs)
+					return fmt.Errorf("option %q requires %d arguments", opt.String(), opt.Nargs)
 				}
 			}
-			tmp := make([]string, 0, opt.nargs)
-			tmp = append(tmp, c.args[c.index:c.index+opt.nargs]...)
-			opt.callback(c, tmp...)
+			tmp := make([]string, 0, opt.Nargs)
+			tmp = append(tmp, c.args[c.index:c.index+opt.Nargs]...)
+			if opt.Callback != nil {
+				opt.Callback(c, tmp...)
+			}
 			if c.err != nil {
 				break
 			}
-			c.index += opt.nargs
+			c.index += opt.Nargs
 		}
 	}
 	return c.err
@@ -72,7 +74,7 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 	if strings.HasPrefix(val, "--") && len(val) > 2 {
 		optname := val[2:]
 		opt, ok := c.parser.opts[optname]
-		if !ok || len(opt.name) == 1 {
+		if !ok || len(opt.Name) == 1 {
 			return nil, fmt.Errorf("unknown option %q", "--"+optname)
 		}
 		opts = append(opts, opt)

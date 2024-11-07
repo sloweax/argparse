@@ -23,18 +23,18 @@ func main() {
 	short := ""
 	long := ""
 
-	parser.AddOption("v", 0, func(ctx *argparse.Context, args ...string) {
+	parser.AddOption(argparse.Option{Name: "v", Callback: func(ctx *argparse.Context, args ...string) {
 		verbose = true
-	})
+	}})
 
-	parser.AddOption("s", 1, func(ctx *argparse.Context, args ...string) {
+	parser.AddOption(argparse.Option{Name: "s", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
 		// args is guaranteed to have length 1
 		short = args[0]
-	})
+	}})
 
-	parser.AddOption("long", 1, func(ctx *argparse.Context, args ...string) {
+	parser.AddOption(argparse.Option{Name: "long", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
 		long = args[0]
-	})
+	}})
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)

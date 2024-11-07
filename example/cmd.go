@@ -15,16 +15,15 @@ func main() {
 	parser := argparse.New()
 
 	foo := ""
-	parser.AddOption("foo", 1, func(ctx *argparse.Context, args ...string) {
+	parser.AddOption(argparse.Option{Name: "foo", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
 		foo = args[0]
-
-	})
+	}})
 
 	cmd := make([]string, 0)
-	parser.AddOption("cmd", 0, func(ctx *argparse.Context, args ...string) {
+	parser.AddOption(argparse.Option{Name: "cmd", Callback: func(ctx *argparse.Context, args ...string) {
 		ctx.Abort()
 		cmd = append(cmd, ctx.Remain()...)
-	})
+	}})
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)
