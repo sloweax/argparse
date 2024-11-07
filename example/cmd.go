@@ -15,9 +15,7 @@ func main() {
 	parser := argparse.New()
 
 	foo := ""
-	parser.AddOption(argparse.Option{Name: "foo", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
-		foo = args[0]
-	}})
+	parser.AddOption(argparse.String("foo", &foo))
 
 	cmd := make([]string, 0)
 	parser.AddOption(argparse.Option{Name: "cmd", Callback: func(ctx *argparse.Context, args ...string) {

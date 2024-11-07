@@ -22,17 +22,11 @@ func main() {
 	parser.AddSubParser("del", del_parser)
 
 	prefix := ""
-	parser.AddOption(argparse.Option{Name: "prefix", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
-		prefix = args[0]
-	}})
+	parser.AddOption(argparse.String("prefix", &prefix))
 
 	file := ""
-	file_func := func(ctx *argparse.Context, args ...string) {
-		file = args[0]
-	}
-
-	add_parser.AddOption(argparse.Option{Name: "f", Nargs: 1, Callback: file_func})
-	del_parser.AddOption(argparse.Option{Name: "f", Nargs: 1, Callback: file_func})
+	add_parser.AddOption(argparse.String("file", &file))
+	del_parser.AddOption(argparse.String("file", &file))
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)

@@ -30,18 +30,9 @@ func main() {
 	short := ""
 	long := ""
 
-	parser.AddOption(argparse.Option{Name: "v", Callback: func(ctx *argparse.Context, args ...string) {
-		verbose = true
-	}})
-
-	parser.AddOption(argparse.Option{Name: "s", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
-		// args is guaranteed to have length 1
-		short = args[0]
-	}})
-
-	parser.AddOption(argparse.Option{Name: "long", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
-		long = args[0]
-	}})
+	parser.AddOption(argparse.Bool("v", &verbose))
+	parser.AddOption(argparse.String("s", &short))
+	parser.AddOption(argparse.String("long", &long))
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)
@@ -79,17 +70,11 @@ func main() {
 	parser.AddSubParser("del", del_parser)
 
 	prefix := ""
-	parser.AddOption(argparse.Option{Name: "prefix", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
-		prefix = args[0]
-	}})
+	parser.AddOption(argparse.String("prefix", &prefix))
 
 	file := ""
-	file_func := func(ctx *argparse.Context, args ...string) {
-		file = args[0]
-	}
-
-	add_parser.AddOption(argparse.Option{Name: "f", Nargs: 1, Callback: file_func})
-	del_parser.AddOption(argparse.Option{Name: "f", Nargs: 1, Callback: file_func})
+	add_parser.AddOption(argparse.String("file", &file))
+	del_parser.AddOption(argparse.String("file", &file))
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)
@@ -126,11 +111,10 @@ import (
 func main() {
 	files := make([]string, 0)
 
-	foo := ""
 	parser := argparse.New()
-	parser.AddOption(argparse.Option{Name: "foo", Nargs: 1, Callback: func(ctx *argparse.Context, args ...string) {
-		foo = args[0]
-	}})
+
+	foo := ""
+	parser.AddOption(argparse.String("foo", &foo))
 
 	parser.Unparceable(func(ctx *argparse.Context, arg string) {
 		files = append(files, arg)
@@ -146,7 +130,7 @@ func main() {
 }
 ```
 
-types example
+custom types example
 
 ```go
 package main
@@ -159,35 +143,43 @@ import (
 	"github.com/sloweax/argparse"
 )
 
-// $ go run . --num a
-// a is not an integer
-// exit status 1
+// $ go run . --pair 123 321
+// v1=123 v2=321
 
-// $ go run . --num 34
-// num=34
+// $ go run example/types.go --pair 123 abc
+// strconv.Atoi: parsing "abc": invalid syntax
+// exit status 1
 
 func main() {
 	parser := argparse.New()
 
-	num := 0
-	parser.AddOption(argparse.Option{Name: "num", Nargs: 1, Callback: intHandler(&num)})
+	v1 := 0
+	v2 := 0
+	parser.AddOption(IntPair("pair", &v1, &v2))
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("num=%v\n", num)
+	fmt.Printf("v1=%v v2=%v\n", v1, v2)
 }
 
-func intHandler(loc *int) func(*argparse.Context, ...string) {
-	return func(ctx *argparse.Context, args ...string) {
-		num, err := strconv.Atoi(args[0])
-		if err != nil {
-			ctx.AbortWithError(fmt.Errorf("%s is not an integer", args[0]))
+func IntPair(name string, v1 *int, v2 *int) argparse.Option {
+	return argparse.Option{Name: name, Nargs: 2, Callback: func(ctx *argparse.Context, args ...string) {
+		if num, err := strconv.Atoi(args[0]); err != nil {
+			ctx.AbortWithError(err)
 			return
+		} else {
+			*v1 = num
 		}
-		*loc = num
-	}
+
+		if num, err := strconv.Atoi(args[1]); err != nil {
+			ctx.AbortWithError(err)
+			return
+		} else {
+			*v2 = num
+		}
+	}}
 }
 ```
