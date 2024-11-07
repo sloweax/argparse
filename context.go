@@ -10,10 +10,15 @@ type Context struct {
 	index  int
 	args   []string
 	abort  bool
+	err    error
 }
 
 func (c *Context) Abort() {
 	c.abort = true
+}
+
+func (c *Context) AbortWithError(err error) {
+	c.err = err
 }
 
 func (c *Context) parse() error {
@@ -43,6 +48,9 @@ func (c *Context) parse() error {
 			tmp := make([]string, 0, opt.nargs)
 			tmp = append(tmp, c.args[c.index:c.index+opt.nargs]...)
 			opt.callback(c, tmp...)
+			if c.err != nil {
+				return c.err
+			}
 			c.index += opt.nargs
 		}
 	}
