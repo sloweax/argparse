@@ -73,7 +73,7 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 		optname := val[2:]
 		opt, ok := c.parser.opts[optname]
 		if !ok || len(opt.name) == 1 {
-			return nil, fmt.Errorf("unknown option %q", val)
+			return nil, fmt.Errorf("unknown option %q", "--"+optname)
 		}
 		opts = append(opts, opt)
 	} else if strings.HasPrefix(val, "-") && len(val) > 1 {
@@ -81,7 +81,7 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 			optname := val[i : i+1]
 			opt, ok := c.parser.opts[optname]
 			if !ok {
-				return nil, fmt.Errorf("unknown option %q", optname)
+				return nil, fmt.Errorf("unknown option %q", "-"+optname)
 			}
 			opts = append(opts, opt)
 		}
