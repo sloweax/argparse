@@ -1,5 +1,7 @@
 # Examples
 
+you can check more examples [here](https://github.com/sloweax/argparse/tree/main/example)
+
 basic example
 
 ```go
