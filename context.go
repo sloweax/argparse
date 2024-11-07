@@ -36,8 +36,8 @@ func (c *Context) parse() error {
 			return c.parser.SubParser.Parse(c.Remain()...)
 		}
 		c.index++
-		for _, opt := range opts {
-			if c.Remaining() < opt.nargs {
+		for i, opt := range opts {
+			if opt.nargs >= 1 && i != len(opts)-1 || c.Remaining() < opt.nargs {
 				if c.parser.unparceable != nil {
 					c.parser.unparceable(c, c.args[c.index-1])
 					break
@@ -82,14 +82,6 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 					return []*Option{}, c.err
 				} else {
 					return nil, fmt.Errorf("option %q is invalid", val)
-				}
-			}
-			if opt.nargs > 0 && i != len(val)-1 {
-				if c.parser.unparceable != nil {
-					c.parser.unparceable(c, val)
-					return []*Option{}, c.err
-				} else {
-					return nil, fmt.Errorf("option %q requires %d arguments", opt.String(), opt.nargs)
 				}
 			}
 			opts = append(opts, opt)
