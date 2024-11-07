@@ -1,5 +1,9 @@
 package argparse
 
+import (
+	"os"
+)
+
 type ArgParser struct {
 	ctx        *Context
 	opts       map[string]*Option
@@ -26,6 +30,11 @@ func (a *ArgParser) AddOption(name string, nargs int, callback func(*Context, ..
 func (a *ArgParser) Parse(args ...string) error {
 	a.ctx = &Context{args: args, parser: a}
 	return a.ctx.parse()
+}
+
+func (a *ArgParser) ParseArgs() error {
+	return a.Parse(os.Args[1:]...)
+
 }
 
 func (a *ArgParser) Unparceable(callback func(*Context, string)) {
