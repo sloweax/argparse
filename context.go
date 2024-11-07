@@ -54,7 +54,7 @@ func (c *Context) parse() error {
 			c.index += opt.nargs
 		}
 	}
-	return nil
+	return c.err
 }
 
 func (c *Context) getOptions(val string) ([]*Option, error) {
@@ -66,7 +66,7 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 		if !ok || len(opt.name) == 1 {
 			if c.parser.unparceable != nil {
 				c.parser.unparceable(c, val)
-				return []*Option{}, nil
+				return []*Option{}, c.err
 			} else {
 				return nil, fmt.Errorf("option %q is invalid", val)
 			}
@@ -79,7 +79,7 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 			if !ok {
 				if c.parser.unparceable != nil {
 					c.parser.unparceable(c, val)
-					return []*Option{}, nil
+					return []*Option{}, c.err
 				} else {
 					return nil, fmt.Errorf("option %q is invalid", val)
 				}
@@ -87,7 +87,7 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 			if opt.nargs > 0 && i != len(val)-1 {
 				if c.parser.unparceable != nil {
 					c.parser.unparceable(c, val)
-					return []*Option{}, nil
+					return []*Option{}, c.err
 				} else {
 					return nil, fmt.Errorf("option %q requires %d arguments", opt.String(), opt.nargs)
 				}
@@ -101,7 +101,7 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 
 		if c.parser.unparceable != nil {
 			c.parser.unparceable(c, val)
-			return []*Option{}, nil
+			return []*Option{}, c.err
 		} else {
 			return nil, fmt.Errorf("could not parse option %q", val)
 		}
