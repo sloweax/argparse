@@ -42,3 +42,9 @@ func IntAppend(name string, v *[]int) Option {
 		}
 	}}
 }
+
+func Func(name string, f func()) Option {
+	return Option{Name: name, Callback: func(ctx *Context, args ...string) {
+		f()
+	}}
+}
