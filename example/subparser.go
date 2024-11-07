@@ -19,7 +19,7 @@ func main() {
 	del_parser := argparse.New()
 
 	parser.AddSubParser("add", add_parser)
-	parser.AddSubParser("sub", del_parser)
+	parser.AddSubParser("del", del_parser)
 
 	prefix := ""
 	parser.AddOption("prefix", 1, func(ctx *argparse.Context, args ...string) {
