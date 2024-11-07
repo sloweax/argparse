@@ -18,6 +18,7 @@ func (c *Context) Abort() {
 }
 
 func (c *Context) AbortWithError(err error) {
+	c.Abort()
 	c.err = err
 }
 
