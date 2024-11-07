@@ -35,7 +35,7 @@ func assertEqual[T comparable](t *testing.T, expected T, actual T) {
 	t.Errorf("expected (%+v) is not equal to actual (%+v)", expected, actual)
 }
 
-func TestBasic(t *testing.T) {
+func TestAll(t *testing.T) {
 	parser := New()
 
 	short_opt := ""
@@ -68,12 +68,20 @@ func TestBasic(t *testing.T) {
 		opt_array = append(opt_array, args...)
 	}})
 
-	assertError(t, false, parser.Parse("-s", "sval", "--long", "lval", "-S", "--long-flag", "--two", "foo", "bar"))
+	pos := ""
+	parser.AddOption(StringPositional("pos", &pos))
+
+	rest := make([]string, 0)
+	parser.AddOption(StringRest("rest", &rest))
+
+	assertError(t, false, parser.Parse("-s", "sval", "--long", "lval", "pos", "-S", "a", "--long-flag", "b", "--two", "foo", "bar", "c"))
 
 	assertEqual(t, short_opt, "sval")
 	assertEqual(t, long_opt, "lval")
 	assertEqual(t, short_flag, true)
 	assertEqual(t, long_flag, true)
+	assertEqual(t, pos, "pos")
+	assertSliceEqual(t, []string{"a", "b", "c"}, rest)
 	assertSliceEqual(t, opt_array, []string{"foo", "bar"})
 }
 
@@ -213,4 +221,31 @@ func TestSubParser(t *testing.T) {
 	assertEqual(t, edited, 0)
 	assertEqual(t, parser.SubParser, sparser)
 	assertEqual(t, sparser.SubParser, ssparser)
+}
+
+func TestPositional(t *testing.T) {
+	parser := New()
+
+	pos := ""
+	parser.AddOption(StringPositional("pos", &pos))
+	assertError(t, false, parser.Parse("a"))
+	assertEqual(t, "a", pos)
+
+	pos2 := ""
+	parser.AddOption(StringPositional("pos2", &pos2))
+	assertError(t, false, parser.Parse("a", "b"))
+	assertEqual(t, "a", pos)
+	assertEqual(t, "b", pos2)
+
+	assertError(t, true, parser.Parse("a", "b", "c"))
+
+	rest := make([]string, 0)
+	parser.AddOption(StringRest("rest", &rest))
+
+	assertError(t, false, parser.Parse("a", "b", "c", "d"))
+	assertEqual(t, "a", pos)
+	assertEqual(t, "b", pos2)
+	assertSliceEqual(t, []string{"c", "d"}, rest)
+
+	assertError(t, true, parser.Parse("a", "b", "c", "-f", "d"))
 }

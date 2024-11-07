@@ -7,10 +7,14 @@ import (
 
 type Context struct {
 	parser *ArgParser
+
+	// positional index
+	pindex int
 	index  int
-	args   []string
-	abort  bool
-	err    error
+
+	args  []string
+	abort bool
+	err   error
 }
 
 func (c *Context) Abort() {
@@ -46,23 +50,35 @@ func (c *Context) parse() error {
 
 		c.index++
 		for i, opt := range opts {
-			if opt.Nargs >= 1 && i != len(opts)-1 || c.Remaining() < opt.Nargs {
+			if opt.Positional {
+				c.index--
+			}
+
+			nargs := opt.Nargs
+			if nargs < 0 {
+				nargs = 1
+			}
+
+			if nargs >= 1 && i != len(opts)-1 || c.Remaining() < nargs {
 				if c.parser.unparceable != nil {
 					c.parser.unparceable(c, c.args[c.index-1])
 					break
 				} else {
-					return fmt.Errorf("option %q requires %d arguments", opt.String(), opt.Nargs)
+					return fmt.Errorf("option %q requires %d arguments", opt.String(), nargs)
 				}
 			}
-			tmp := make([]string, 0, opt.Nargs)
-			tmp = append(tmp, c.args[c.index:c.index+opt.Nargs]...)
+
+			tmp := make([]string, 0, nargs)
+			tmp = append(tmp, c.args[c.index:c.index+nargs]...)
 			if opt.Callback != nil {
 				opt.Callback(c, tmp...)
 			}
+
 			if c.err != nil {
 				break
 			}
-			c.index += opt.Nargs
+
+			c.index += nargs
 		}
 	}
 	return c.err
@@ -92,7 +108,14 @@ func (c *Context) getOptions(val string) ([]*Option, error) {
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("could not parse option %q", val)
+		if c.pindex < len(c.parser.pos) {
+			opts = append(opts, c.parser.pos[c.pindex])
+			c.pindex++
+		} else if len(c.parser.pos) > 0 && c.parser.pos[len(c.parser.pos)-1].Nargs < 0 {
+			opts = append(opts, c.parser.pos[len(c.parser.pos)-1])
+		} else {
+			return nil, fmt.Errorf("could not parse option %q", val)
+		}
 	}
 
 	return opts, nil

@@ -5,8 +5,12 @@ import (
 )
 
 type ArgParser struct {
-	ctx        *Context
-	opts       map[string]*Option
+	ctx *Context
+
+	opts map[string]*Option
+	// positionals
+	pos []*Option
+
 	subparsers map[string]*ArgParser
 
 	// selected subparser
@@ -23,7 +27,17 @@ func New() *ArgParser {
 }
 
 func (a *ArgParser) AddOption(opt Option) {
-	a.opts[opt.Name] = &opt
+	if opt.Positional {
+		if opt.Nargs == 0 {
+			panic("cant have positional with nargs == 0")
+		}
+		a.pos = append(a.pos, &opt)
+	} else {
+		if opt.Nargs < 0 {
+			panic("cant have option with nargs < 0")
+		}
+		a.opts[opt.Name] = &opt
+	}
 }
 
 func (a *ArgParser) Parse(args ...string) error {
