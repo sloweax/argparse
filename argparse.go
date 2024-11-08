@@ -156,7 +156,7 @@ func FromStruct(s any) *ArgParser {
 			parser.AddSubParser(name, (*ArgParser)(fv.Addr().UnsafePointer()))
 		case *ArgParser:
 			parser.AddSubParser(name, (*ArgParser)(fv.UnsafePointer()))
-		case any:
+		default:
 			switch ft.Type.Kind() {
 			case reflect.Struct:
 				parser.AddSubParser(name, FromStruct(fv.Addr().Interface()))
