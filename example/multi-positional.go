@@ -17,7 +17,7 @@ func main() {
 	parser.AddOption(argparse.Bool("f", &flag))
 
 	args := make([]string, 0)
-	parser.AddOption(argparse.StringRest("args", &args))
+	parser.AddOption(argparse.StringAppendPositional("args", &args))
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)

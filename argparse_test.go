@@ -72,7 +72,7 @@ func TestAll(t *testing.T) {
 	parser.AddOption(StringPositional("pos", &pos))
 
 	rest := make([]string, 0)
-	parser.AddOption(StringRest("rest", &rest))
+	parser.AddOption(StringAppendPositional("rest", &rest))
 
 	assertError(t, false, parser.Parse("-s", "sval", "--long", "lval", "pos", "-S", "a", "--long-flag", "b", "--two", "foo", "bar", "c"))
 
@@ -240,7 +240,7 @@ func TestPositional(t *testing.T) {
 	assertError(t, true, parser.Parse("a", "b", "c"))
 
 	rest := make([]string, 0)
-	parser.AddOption(StringRest("rest", &rest))
+	parser.AddOption(StringAppendPositional("rest", &rest))
 
 	assertError(t, false, parser.Parse("a", "b", "c", "d"))
 	assertEqual(t, "a", pos)

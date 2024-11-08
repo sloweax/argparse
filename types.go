@@ -43,7 +43,7 @@ func StringVarPositional(name string, v **string) Option {
 	}}
 }
 
-func StringRest(name string, v *[]string) Option {
+func StringAppendPositional(name string, v *[]string) Option {
 	return Option{Name: name, Positional: true, Nargs: -1, Callback: func(ctx *Context, args ...string) {
 		*v = append(*v, args[0])
 	}}

@@ -107,7 +107,7 @@ func FromStruct(s any) *ArgParser {
 			case reflect.String:
 				switch opttype {
 				case "positional":
-					parser.AddOption(StringRest(name, (*[]string)(fv.Addr().Elem().Addr().UnsafePointer())))
+					parser.AddOption(StringAppendPositional(name, (*[]string)(fv.Addr().Elem().Addr().UnsafePointer())))
 				case "":
 					parser.AddOptionWithAlias(StringAppend(name, (*[]string)(fv.Addr().Elem().Addr().UnsafePointer())), aliases...)
 				default:
