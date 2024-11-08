@@ -107,14 +107,6 @@ func FromStruct(s any) *ArgParser {
 			opttype = tmp
 		}
 
-		if ft.Type.Kind() == reflect.Struct {
-			parser.AddSubParser(name, FromStruct(fv.Addr().Interface()))
-			continue
-		} else if ft.Type.Kind() == reflect.Pointer && ft.Type.Elem().Kind() == reflect.Struct {
-			parser.AddSubParser(name, FromStruct(fv.Interface()))
-			continue
-		}
-
 		switch fv.Interface().(type) {
 		case string:
 			switch opttype {
@@ -163,6 +155,15 @@ func FromStruct(s any) *ArgParser {
 			parser.AddSubParser(name, (*ArgParser)(fv.Addr().UnsafePointer()))
 		case *ArgParser:
 			parser.AddSubParser(name, (*ArgParser)(fv.UnsafePointer()))
+		case any:
+			switch ft.Type.Kind() {
+			case reflect.Struct:
+				parser.AddSubParser(name, FromStruct(fv.Addr().Interface()))
+			case reflect.Pointer:
+				if ft.Type.Elem().Kind() == reflect.Struct {
+					parser.AddSubParser(name, FromStruct(fv.Interface()))
+				}
+			}
 		}
 	}
 
