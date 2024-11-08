@@ -7,10 +7,6 @@ import (
 	"unicode"
 )
 
-var (
-	ArgParserKind = reflect.TypeOf(ArgParser{}).Kind()
-)
-
 type ArgParser struct {
 	ctx *Context
 
@@ -111,58 +107,62 @@ func FromStruct(s any) *ArgParser {
 			opttype = tmp
 		}
 
-		switch ft.Type.Kind() {
-		case reflect.Array, reflect.Slice:
-			switch fv.Type().Elem().Kind() {
-			case reflect.String:
-				switch opttype {
-				case "positional":
-					parser.AddOption(StringAppendPositional(name, (*[]string)(fv.Addr().Elem().Addr().UnsafePointer())))
-				case "":
-					parser.AddOptionWithAlias(StringAppend(name, (*[]string)(fv.Addr().Elem().Addr().UnsafePointer())), aliases...)
-				default:
-					panic("unsupported type")
-				}
+		if ft.Type.Kind() == reflect.Struct {
+			parser.AddSubParser(name, FromStruct(fv.Addr().Interface()))
+			continue
+		} else if ft.Type.Kind() == reflect.Pointer && ft.Type.Elem().Kind() == reflect.Struct {
+			parser.AddSubParser(name, FromStruct(fv.Interface()))
+			continue
+		}
+
+		switch fv.Interface().(type) {
+		case string:
+			switch opttype {
+			case "":
+				parser.AddOptionWithAlias(String(name, (*string)(fv.Addr().UnsafePointer())), aliases...)
+			case "positional":
+				parser.AddOption(StringPositional(name, (*string)(fv.Addr().UnsafePointer())))
+			default:
+				panic("unsupported type")
 			}
-		case reflect.Pointer:
-			switch ft.Type.Elem().Kind() {
-			case ArgParserKind:
-				parser.AddSubParser(name, (*ArgParser)(fv.UnsafePointer()))
-			case reflect.String:
-				switch opttype {
-				case "":
-					parser.AddOptionWithAlias(StringVar(name, (**string)(fv.Addr().UnsafePointer())), aliases...)
-				case "positional":
-					parser.AddOption(StringVarPositional(name, (**string)(fv.Addr().UnsafePointer())))
-				default:
-					panic("unsupported type")
-				}
+		case *string:
+			switch opttype {
+			case "":
+				parser.AddOptionWithAlias(StringVar(name, (**string)(fv.Addr().UnsafePointer())), aliases...)
+			case "positional":
+				parser.AddOption(StringVarPositional(name, (**string)(fv.Addr().UnsafePointer())))
+			default:
+				panic("unsupported type")
 			}
-		case reflect.Bool:
+		case []string:
+			switch opttype {
+			case "":
+				parser.AddOptionWithAlias(StringAppend(name, (*[]string)(fv.Addr().UnsafePointer())), aliases...)
+			case "positional":
+				parser.AddOption(StringAppendPositional(name, (*[]string)(fv.Addr().UnsafePointer())))
+			default:
+				panic("unsupported type")
+			}
+		case bool:
 			switch opttype {
 			case "":
 				parser.AddOptionWithAlias(Bool(name, (*bool)(fv.Addr().UnsafePointer())), aliases...)
 			default:
 				panic("unsupported type")
 			}
-		case reflect.Int:
+		case int:
 			switch opttype {
-			case "positional":
-				parser.AddOption(IntPositional(name, (*int)(fv.Addr().UnsafePointer())))
 			case "":
 				parser.AddOptionWithAlias(Int(name, (*int)(fv.Addr().UnsafePointer())), aliases...)
-			default:
-				panic("unsupported type")
-			}
-		case reflect.String:
-			switch opttype {
 			case "positional":
-				parser.AddOption(StringPositional(name, (*string)(fv.Addr().UnsafePointer())))
-			case "":
-				parser.AddOptionWithAlias(String(name, (*string)(fv.Addr().UnsafePointer())), aliases...)
+				parser.AddOption(IntPositional(name, (*int)(fv.Addr().UnsafePointer())))
 			default:
 				panic("unsupported type")
 			}
+		case ArgParser:
+			parser.AddSubParser(name, (*ArgParser)(fv.Addr().UnsafePointer()))
+		case *ArgParser:
+			parser.AddSubParser(name, (*ArgParser)(fv.UnsafePointer()))
 		}
 	}
 
