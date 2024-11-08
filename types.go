@@ -65,16 +65,6 @@ func Int(name string, v *int) Option {
 	}}
 }
 
-func IntAppend(name string, v *[]int) Option {
-	return Option{Name: name, Nargs: 1, Callback: func(ctx *Context, args ...string) {
-		if num, err := strconv.Atoi(args[0]); err != nil {
-			ctx.AbortWithError(fmt.Errorf("%q is not an integer", args[0]))
-		} else {
-			*v = append(*v, num)
-		}
-	}}
-}
-
 func Func(name string, f func()) Option {
 	return Option{Name: name, Callback: func(ctx *Context, args ...string) {
 		f()
