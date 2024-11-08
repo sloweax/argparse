@@ -2,6 +2,9 @@ package argparse
 
 import (
 	"os"
+	"reflect"
+	"strings"
+	"unicode"
 )
 
 type ArgParser struct {
@@ -56,4 +59,82 @@ func (a *ArgParser) Unparceable(callback func(*Context, string)) {
 
 func (a *ArgParser) AddSubParser(name string, p *ArgParser) {
 	a.subparsers[name] = p
+}
+
+func FromStruct(s any) *ArgParser {
+	p := reflect.ValueOf(s)
+	v := p.Elem()
+	t := v.Type()
+
+	parser := New()
+
+	for i := 0; i < v.NumField(); i++ {
+		fv := v.Field(i)
+		ft := t.Field(i)
+
+		aliases := make([]string, 0)
+		aliases = append(aliases, camelCaseToDashed(ft.Name))
+
+		if tmp, ok := ft.Tag.Lookup("alias"); ok {
+			for _, alias := range strings.Split(tmp, ",") {
+				aliases = append(aliases, alias)
+			}
+		}
+
+		opttype := ""
+		if tmp, ok := ft.Tag.Lookup("type"); ok {
+			opttype = tmp
+		}
+
+		switch ft.Type.Kind() {
+		case reflect.Bool:
+			for _, alias := range aliases {
+				switch opttype {
+				case "":
+					parser.AddOption(Bool(alias, (*bool)(fv.Addr().UnsafePointer())))
+				default:
+					panic("unsupported type")
+				}
+			}
+		case reflect.Int:
+			for _, alias := range aliases {
+				switch opttype {
+				case "positional":
+					parser.AddOption(IntPositional(alias, (*int)(fv.Addr().UnsafePointer())))
+				case "":
+					parser.AddOption(Int(alias, (*int)(fv.Addr().UnsafePointer())))
+				default:
+					panic("unsupported type")
+				}
+			}
+		case reflect.String:
+			for _, alias := range aliases {
+				switch opttype {
+				case "positional":
+					parser.AddOption(StringPositional(alias, (*string)(fv.Addr().UnsafePointer())))
+				case "":
+					parser.AddOption(String(alias, (*string)(fv.Addr().UnsafePointer())))
+				default:
+					panic("unsupported type")
+				}
+			}
+		default:
+			panic("unsupported type")
+		}
+	}
+
+	return parser
+}
+
+func camelCaseToDashed(a string) string {
+	r := strings.Builder{}
+	for i, c := range a {
+		if unicode.IsUpper(c) && i != 0 {
+			r.WriteRune('-')
+			r.WriteRune(unicode.ToLower(c))
+			continue
+		}
+		r.WriteRune(unicode.ToLower(c))
+	}
+	return r.String()
 }
