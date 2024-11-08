@@ -12,6 +12,9 @@ type Context struct {
 	pindex int
 	index  int
 
+	// current option
+	opt *Option
+
 	args  []string
 	abort bool
 	err   error
@@ -71,7 +74,9 @@ func (c *Context) parse() error {
 			tmp := make([]string, 0, nargs)
 			tmp = append(tmp, c.args[c.index:c.index+nargs]...)
 			if opt.Callback != nil {
+				c.opt = opt
 				opt.Callback(c, tmp...)
+				c.opt = nil
 			}
 
 			if c.err != nil {
@@ -127,4 +132,9 @@ func (c *Context) Remain() []string {
 
 func (c *Context) Remaining() int {
 	return len(c.args) - c.index
+}
+
+// return current option
+func (c *Context) Option() *Option {
+	return c.opt
 }
