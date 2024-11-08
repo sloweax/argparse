@@ -7,6 +7,10 @@ import (
 	"unicode"
 )
 
+var (
+	ArgParserKind = reflect.TypeOf(ArgParser{}).Kind()
+)
+
 type ArgParser struct {
 	ctx *Context
 
@@ -98,6 +102,34 @@ func FromStruct(s any) *ArgParser {
 		}
 
 		switch ft.Type.Kind() {
+		case reflect.Array, reflect.Slice:
+			switch fv.Type().Elem().Kind() {
+			case reflect.String:
+				switch opttype {
+				case "positional":
+					parser.AddOption(StringRest(name, (*[]string)(fv.Addr().Elem().Addr().UnsafePointer())))
+				case "":
+					parser.AddOptionWithAlias(StringAppend(name, (*[]string)(fv.Addr().Elem().Addr().UnsafePointer())), aliases...)
+				default:
+					panic("unsupported type")
+				}
+			default:
+				panic("unsupported type")
+			}
+		case reflect.Pointer:
+			switch ft.Type.Elem().Kind() {
+			case ArgParserKind:
+				parser.AddSubParser(name, (*ArgParser)(fv.UnsafePointer()))
+			case reflect.String:
+				switch opttype {
+				case "":
+					parser.AddOptionWithAlias(StringVar(name, (**string)(fv.Addr().UnsafePointer())), aliases...)
+				case "positional":
+					parser.AddOption(StringVarPositional(name, (**string)(fv.Addr().UnsafePointer())))
+				default:
+					panic("unsupported type")
+				}
+			}
 		case reflect.Bool:
 			switch opttype {
 			case "":
