@@ -17,7 +17,8 @@ type ArgParser struct {
 	subparsers map[string]*ArgParser
 
 	// selected subparser
-	SubParser *ArgParser
+	SubParser     *ArgParser
+	SubParserName string
 
 	unparceable func(*Context, string)
 }

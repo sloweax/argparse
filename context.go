@@ -46,7 +46,8 @@ func (c *Context) parse() error {
 		}
 
 		if opts == nil {
-			c.parser.SubParser = c.parser.subparsers[c.args[c.index]]
+			c.parser.SubParserName = c.args[c.index]
+			c.parser.SubParser = c.parser.subparsers[c.parser.SubParserName]
 			c.index++
 			return c.parser.SubParser.Parse(c.Remain()...)
 		}
