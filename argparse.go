@@ -84,6 +84,10 @@ func FromStruct(s any) *ArgParser {
 		fv := v.Field(i)
 		ft := t.Field(i)
 
+		if len(ft.Name) == 0 || unicode.IsLower(rune(ft.Name[0])) {
+			continue
+		}
+
 		if tmp, ok := ft.Tag.Lookup("ignore"); ok {
 			if strings.HasPrefix(strings.ToLower(tmp), "y") {
 				continue
