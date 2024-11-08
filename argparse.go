@@ -85,7 +85,7 @@ func FromStruct(s any) *ArgParser {
 		ft := t.Field(i)
 
 		if tmp, ok := ft.Tag.Lookup("ignore"); ok {
-			if !ok || strings.HasPrefix(strings.ToLower(tmp), "y") {
+			if strings.HasPrefix(strings.ToLower(tmp), "y") {
 				continue
 			}
 		}
