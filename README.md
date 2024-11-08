@@ -58,15 +58,19 @@ import (
 )
 
 type MyStruct struct {
-	Flag       bool   `alias:"f"` // alias accepts a comma separated list of names
+	// alias accepts a comma separated list of names
+	Flag       bool   `alias:"f"`
 	LongName   string `alias:"l"`
 	Positional string `type:"positional"`
+	// if name is not specified. it will be auto generated based on field name
+	BadNameForOption string `name:"nice-name"`
 }
 
-// $ go run . --long-name abc -f 123
+// go run . --long-name abc -f 123 --nice-name test
 // Flag=true
 // LongName=abc
 // Positional=123
+// BadNameForOption=test
 
 func main() {
 	ms := MyStruct{}
@@ -80,6 +84,7 @@ func main() {
 	fmt.Printf("Flag=%v\n", ms.Flag)
 	fmt.Printf("LongName=%v\n", ms.LongName)
 	fmt.Printf("Positional=%v\n", ms.Positional)
+	fmt.Printf("BadNameForOption=%v\n", ms.BadNameForOption)
 }
 ```
 
