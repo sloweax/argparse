@@ -17,6 +17,12 @@ func String(name string, v *string) Option {
 	}}
 }
 
+func StringVar(name string, v **string) Option {
+	return Option{Name: name, Nargs: 1, Callback: func(ctx *Context, args ...string) {
+		*v = &args[0]
+	}}
+}
+
 func StringAppend(name string, v *[]string) Option {
 	return Option{Name: name, Nargs: 1, Callback: func(ctx *Context, args ...string) {
 		*v = append(*v, args[0])
