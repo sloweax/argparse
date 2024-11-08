@@ -63,7 +63,7 @@ type MyStruct struct {
 	LongName   string `alias:"l"`
 	Positional string `type:"positional"`
 	// if name is not specified. it will be auto generated based on field name
-	BadNameForOption string `name:"nice-name" ignore:""`
+	BadNameForOption string `name:"nice-name"`
 	// dont add the option below
 	Ignored string `ignore:"y"`
 }
