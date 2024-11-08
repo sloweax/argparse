@@ -67,7 +67,13 @@ func (c *Context) parse() error {
 					c.parser.unparceable(c, c.args[c.index-1])
 					break
 				} else {
-					return fmt.Errorf("option %q requires %d arguments", opt.String(), nargs)
+					var suffix string
+					if nargs == 1 {
+						suffix = "an argument"
+					} else {
+						suffix = fmt.Sprintf("%d arguments", nargs)
+					}
+					return fmt.Errorf("option %q requires %s", opt.String(), suffix)
 				}
 			}
 
