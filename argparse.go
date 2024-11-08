@@ -113,8 +113,6 @@ func FromStruct(s any) *ArgParser {
 				default:
 					panic("unsupported type")
 				}
-			default:
-				panic("unsupported type")
 			}
 		case reflect.Pointer:
 			switch ft.Type.Elem().Kind() {
@@ -155,8 +153,6 @@ func FromStruct(s any) *ArgParser {
 			default:
 				panic("unsupported type")
 			}
-		default:
-			continue
 		}
 	}
 
