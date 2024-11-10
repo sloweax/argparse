@@ -31,6 +31,12 @@ func New() *ArgParser {
 }
 
 func (a *ArgParser) AddOption(opt Option) {
+	if len(opt.Name) == 0 {
+		panic("cant have option without name")
+	}
+	if strings.HasPrefix(opt.Name, "-") {
+		panic("option name cant start with -")
+	}
 	if opt.Positional {
 		if opt.Nargs == 0 {
 			panic("cant have positional with nargs == 0")
