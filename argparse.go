@@ -103,10 +103,7 @@ func FromStruct(s any) *ArgParser {
 			aliases = append(aliases, strings.Split(tmp, ",")...)
 		}
 
-		opttype := ""
-		if tmp, ok := ft.Tag.Lookup("type"); ok {
-			opttype = tmp
-		}
+		opttype, _ := ft.Tag.Lookup("type")
 
 		switch fv.Interface().(type) {
 		case string:
