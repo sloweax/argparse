@@ -19,7 +19,7 @@ func String(name string, v *string) Option {
 	}}
 }
 
-func StringVar(name string, v **string) Option {
+func StringAddr(name string, v **string) Option {
 	return Option{Name: name, Nargs: 1, Callback: func(ctx *Context, args ...string) {
 		*v = &args[0]
 	}}
@@ -37,7 +37,7 @@ func StringPositional(name string, v *string) Option {
 	}}
 }
 
-func StringVarPositional(name string, v **string) Option {
+func StringAddrPositional(name string, v **string) Option {
 	return Option{Name: name, Positional: true, Nargs: 1, Callback: func(ctx *Context, args ...string) {
 		*v = &args[0]
 	}}

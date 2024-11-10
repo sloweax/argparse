@@ -121,9 +121,9 @@ func FromStruct(s any) *ArgParser {
 		case *string:
 			switch opttype {
 			case "":
-				parser.AddOptionWithAlias(StringVar(name, (**string)(fv.Addr().UnsafePointer())), aliases...)
+				parser.AddOptionWithAlias(StringAddr(name, (**string)(fv.Addr().UnsafePointer())), aliases...)
 			case "positional":
-				parser.AddOption(StringVarPositional(name, (**string)(fv.Addr().UnsafePointer())))
+				parser.AddOption(StringAddrPositional(name, (**string)(fv.Addr().UnsafePointer())))
 			default:
 				panic("unsupported type")
 			}
