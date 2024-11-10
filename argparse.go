@@ -35,6 +35,9 @@ func (a *ArgParser) AddOption(opt Option) {
 		if opt.Nargs == 0 {
 			panic("cant have positional with nargs == 0")
 		}
+		if len(a.pos) > 0 && a.pos[len(a.pos)-1].Nargs == -1 {
+			panic("positional with nargs -1 must be the last")
+		}
 		a.pos = append(a.pos, &opt)
 	} else {
 		if opt.Nargs < 0 {
