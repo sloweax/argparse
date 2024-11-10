@@ -163,13 +163,25 @@ func FromStruct(s any) *ArgParser {
 		case *ArgParser:
 			parser.AddSubParser(name, (*ArgParser)(fv.UnsafePointer()))
 		default:
-			switch ft.Type.Kind() {
+			if ft.Type.Kind() == reflect.Pointer {
+				fv = fv.Elem()
+			}
+			switch fv.Type().Kind() {
 			case reflect.Struct:
-				parser.AddSubParser(name, FromStruct(fv.Addr().Interface()))
-			case reflect.Pointer:
-				if ft.Type.Elem().Kind() == reflect.Struct {
-					parser.AddSubParser(name, FromStruct(fv.Interface()))
+				switch opttype {
+				case "":
+					parser.AddOption(OptionFromStruct(name, fv.Addr().Interface()))
+				case "positional":
+					opt := OptionFromStruct(name, fv.Addr().Interface())
+					opt.Positional = true
+					parser.AddOption(opt)
+				case "subparser":
+					parser.AddSubParser(name, FromStruct(fv.Addr().Interface()))
+				default:
+					panic("unsupported type")
 				}
+			default:
+				panic("unsupported type")
 			}
 		}
 	}
