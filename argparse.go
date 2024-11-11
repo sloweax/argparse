@@ -34,7 +34,7 @@ func (a *ArgParser) AddOption(opt Option) {
 	if len(opt.Name) == 0 {
 		panic("cant have option without name")
 	}
-	if strings.HasPrefix(opt.Name, "-") {
+	if strings.HasPrefix(opt.Name, "-") && len(opt.Name) != 1 && !opt.Positional {
 		panic("option name cant start with -")
 	}
 	if opt.Positional {
