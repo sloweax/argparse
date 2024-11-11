@@ -49,6 +49,21 @@ func StringAppendPositional(name string, v *[]string) Option {
 	}}
 }
 
+func StringRest(name string, v *[]string) Option {
+	return Option{Name: name, Callback: func(ctx *Context, args ...string) {
+		ctx.Abort()
+		*v = append(*v, ctx.Remain()...)
+	}}
+}
+
+func StringRestPositional(name string, v *[]string) Option {
+	return Option{Name: name, Positional: true, Nargs: 1, Callback: func(ctx *Context, args ...string) {
+		ctx.Abort()
+		*v = append(*v, args[0])
+		*v = append(*v, ctx.Remain()...)
+	}}
+}
+
 func Sscanf(name string, format string, v ...any) Option {
 	return Option{Name: name, Nargs: 1, Callback: func(ctx *Context, args ...string) {
 		if _, err := fmt.Sscanf(args[0], format, v...); err != nil {
