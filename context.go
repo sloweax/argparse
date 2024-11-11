@@ -98,21 +98,13 @@ func (c *Context) parse() error {
 		}
 
 		if c.Remaining() < nargs {
-			if c.parser.unparceable != nil {
-				c.opt = opt
-				c.parser.unparceable(c, c.Peek())
-				c.opt = nil
-				c.Skip()
-				continue
+			var suffix string
+			if nargs == 1 {
+				suffix = "an argument"
 			} else {
-				var suffix string
-				if nargs == 1 {
-					suffix = "an argument"
-				} else {
-					suffix = fmt.Sprintf("%d arguments", nargs)
-				}
-				return fmt.Errorf("option %q requires %s", opt.String(), suffix)
+				suffix = fmt.Sprintf("%d arguments", nargs)
 			}
+			return fmt.Errorf("option %q requires %s", opt.String(), suffix)
 		}
 
 		if opt.Callback != nil {
