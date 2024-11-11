@@ -115,7 +115,8 @@ func TestMultiShort(t *testing.T) {
 	assertEqual(t, c, true)
 	assertEqual(t, d, "val")
 
-	assertError(t, true, parser.Parse("-dabc"))
+	assertError(t, false, parser.Parse("-dabc"))
+	assertEqual(t, "abc", d)
 }
 
 func TestAbort(t *testing.T) {
@@ -133,54 +134,6 @@ func TestAbort(t *testing.T) {
 	assertError(t, false, parser.Parse("-a", "-b", "-c"))
 
 	assertSliceEqual(t, []string{"-b", "-c"}, rest)
-
-	edited := false
-	parser.AddOption(Option{Name: "long", Nargs: 1})
-	parser.Unparceable(func(ctx *Context, s string) {
-		ctx.Abort()
-		assertEqual(t, s, "-long")
-		edited = true
-	})
-
-	assertError(t, false, parser.Parse("-long"))
-
-	assertEqual(t, edited, true)
-}
-
-func TestUnparceable(t *testing.T) {
-	parser := New()
-	parser.AddOption(Option{Name: "a"})
-
-	edited := 0
-	parser.Unparceable(func(ctx *Context, s string) {
-		edited++
-	})
-
-	assertError(t, false, parser.Parse("-a"))
-	assertEqual(t, edited, 0)
-
-	assertError(t, false, parser.Parse("-abababa", "asdassd", "--a"))
-	assertEqual(t, edited, 3)
-
-	parser.Unparceable(func(ctx *Context, s string) {
-		parser.ctx.Abort()
-		edited++
-		assertEqual(t, "-ab", s)
-	})
-
-	assertError(t, false, parser.Parse("-aaaaa", "-ab", "-ba"))
-	assertEqual(t, edited, 4)
-
-	edited = 0
-	parser.AddOption(Option{Name: "m", Nargs: 2})
-	parser.Unparceable(func(ctx *Context, s string) {
-		asserts := []string{"-am", "1"}
-		assertEqual(t, asserts[edited], s)
-		edited++
-	})
-
-	assertError(t, false, parser.Parse("-am", "1"))
-	assertEqual(t, edited, 2)
 }
 
 func TestSubParser(t *testing.T) {
@@ -248,4 +201,16 @@ func TestPositional(t *testing.T) {
 	assertSliceEqual(t, []string{"c", "d"}, rest)
 
 	assertError(t, true, parser.Parse("a", "b", "c", "-f", "d"))
+}
+
+func TestExpand(t *testing.T) {
+	parser := New()
+	parser.AddOption(Option{Name: "a"})
+	parser.AddOption(Option{Name: "b"})
+	parser.AddOption(Option{Name: "c", Nargs: 1})
+	ctx := Context{parser: parser}
+	assertSliceEqual(t, []string{"-a", "-b", "-c"}, ctx.expand("-abc"))
+	assertSliceEqual(t, []string{"-c", "cab"}, ctx.expand("-ccab"))
+	assertSliceEqual(t, []string{"--foo", "bar"}, ctx.expand("--foo=bar"))
+	assertSliceEqual(t, []string{"--foo", ""}, ctx.expand("--foo="))
 }

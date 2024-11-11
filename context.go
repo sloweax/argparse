@@ -10,7 +10,6 @@ type Context struct {
 
 	// positional index
 	pindex int
-	index  int
 
 	// current option
 	opt *Option
@@ -29,119 +28,175 @@ func (c *Context) AbortWithError(err error) {
 	c.err = err
 }
 
+func (c *Context) Skip() {
+	if c.Remaining() == 0 {
+		panic("Skip() with nothing left")
+	}
+	c.args = c.args[1:]
+}
+
+func (c *Context) Peek() string {
+	if c.Remaining() == 0 {
+		panic("Peek() with nothing left")
+	}
+	return c.args[0]
+}
+
+func (c *Context) Next() string {
+	if c.Remaining() == 0 {
+		panic("Peek() with nothing left")
+	}
+	r := c.args[0]
+	c.args = c.args[1:]
+	return r
+}
+
+func (c *Context) NextN(n int) []string {
+	if c.Remaining() < n {
+		panic("NextN() out of range")
+	}
+	tmp := make([]string, 0, n)
+	tmp = append(tmp, c.args[:n]...)
+	c.args = c.args[n:]
+	return tmp
+}
+
 func (c *Context) parse() error {
 	for c.Remaining() > 0 {
 		if c.abort {
 			break
 		}
 
-		opts, err := c.getOptions(c.args[c.index])
+		if tmp := c.expand(c.args[0]); len(tmp) > 1 {
+			c.args = append(tmp, c.args[1:]...)
+		}
+
+		opt, err := c.getOption(c.Peek())
 		if err != nil {
 			if c.parser.unparceable != nil {
-				c.parser.unparceable(c, c.args[c.index])
-				c.index++
+				c.parser.unparceable(c, c.Peek())
+				c.Skip()
 				continue
 			}
 			return err
 		}
 
-		if opts == nil {
-			c.parser.SubParserName = c.args[c.index]
-			c.parser.SubParser = c.parser.subparsers[c.parser.SubParserName]
-			c.index++
+		if opt == nil {
+			c.parser.SubParserName = c.Peek()
+			c.parser.SubParser = c.parser.subparsers[c.Peek()]
+			c.Skip()
 			return c.parser.SubParser.Parse(c.Remain()...)
 		}
 
-		c.index++
-		for i, opt := range opts {
-			if opt.Positional {
-				c.index--
-			}
+		if !opt.Positional {
+			c.Skip()
+		}
 
-			nargs := opt.Nargs
-			if nargs < 0 {
-				nargs = 1
-			}
+		nargs := opt.Nargs
+		if nargs < 0 {
+			nargs = 1
+		}
 
-			if nargs >= 1 && i != len(opts)-1 || c.Remaining() < nargs {
-				if c.parser.unparceable != nil {
-					c.parser.unparceable(c, c.args[c.index-1])
-					break
+		if c.Remaining() < nargs {
+			if c.parser.unparceable != nil {
+				c.parser.unparceable(c, c.Peek())
+				c.Skip()
+				continue
+			} else {
+				var suffix string
+				if nargs == 1 {
+					suffix = "an argument"
 				} else {
-					var suffix string
-					if nargs == 1 {
-						suffix = "an argument"
-					} else {
-						suffix = fmt.Sprintf("%d arguments", nargs)
-					}
-					return fmt.Errorf("option %q requires %s", opt.String(), suffix)
+					suffix = fmt.Sprintf("%d arguments", nargs)
 				}
+				return fmt.Errorf("option %q requires %s", opt.String(), suffix)
 			}
+		}
 
-			tmp := make([]string, 0, nargs)
-			tmp = append(tmp, c.args[c.index:c.index+nargs]...)
-			if opt.Callback != nil {
-				c.opt = opt
-				opt.Callback(c, tmp...)
-				c.opt = nil
-			}
+		if opt.Callback != nil {
+			c.opt = opt
+			opt.Callback(c, c.NextN(nargs)...)
+			c.opt = nil
+		}
 
-			if c.err != nil {
-				break
-			}
-
-			c.index += nargs
+		if c.err != nil {
+			break
 		}
 	}
 	return c.err
 }
 
-func (c *Context) getOptions(val string) ([]*Option, error) {
-	opts := make([]*Option, 0)
-
+func (c *Context) getOption(val string) (*Option, error) {
 	if strings.HasPrefix(val, "--") && len(val) > 2 {
 		optname := val[2:]
 		opt, ok := c.parser.opts[optname]
 		if !ok || len(opt.Name) == 1 {
-			return nil, fmt.Errorf("unknown option %q", "--"+optname)
+			return nil, fmt.Errorf("unknown option %q", val)
 		}
-		opts = append(opts, opt)
+		return opt, nil
 	} else if strings.HasPrefix(val, "-") && len(val) > 1 {
-		for i := 1; i < len(val); i++ {
-			optname := val[i : i+1]
-			opt, ok := c.parser.opts[optname]
-			if !ok {
-				return nil, fmt.Errorf("unknown option %q", "-"+optname)
-			}
-			opts = append(opts, opt)
+		optname := val[1:]
+		opt, ok := c.parser.opts[optname]
+		if !ok {
+			return nil, fmt.Errorf("unknown option %q", val)
 		}
-	} else {
-		if _, ok := c.parser.subparsers[val]; ok {
-			return nil, nil
-		}
-
-		if c.pindex < len(c.parser.pos) {
-			opts = append(opts, c.parser.pos[c.pindex])
-			c.pindex++
-		} else if len(c.parser.pos) > 0 && c.parser.pos[len(c.parser.pos)-1].Nargs < 0 {
-			opts = append(opts, c.parser.pos[len(c.parser.pos)-1])
-		} else {
-			return nil, fmt.Errorf("could not parse option %q", val)
-		}
+		return opt, nil
 	}
 
-	return opts, nil
+	if _, ok := c.parser.subparsers[val]; ok {
+		return nil, nil
+	}
+
+	if c.pindex < len(c.parser.pos) {
+		opt := c.parser.pos[c.pindex]
+		c.pindex++
+		return opt, nil
+	} else if len(c.parser.pos) > 0 && c.parser.pos[len(c.parser.pos)-1].Nargs < 0 {
+		return c.parser.pos[len(c.parser.pos)-1], nil
+	}
+
+	return nil, fmt.Errorf("could not parse option %q", val)
 }
 
 func (c *Context) Remain() []string {
-	return c.args[c.index:]
+	return c.args
 }
 
 func (c *Context) Remaining() int {
-	return len(c.args) - c.index
+	return len(c.args)
 }
 
 // return current option
 func (c *Context) Option() *Option {
 	return c.opt
+}
+
+func (c *Context) expand(val string) []string {
+	r := make([]string, 0)
+
+	if strings.HasPrefix(val, "--") && len(val) > 2 && val[2] != '=' {
+		if tmp := strings.SplitN(val, "=", 2); len(tmp) > 1 {
+			return tmp
+		}
+	} else if strings.HasPrefix(val, "-") && len(val) > 1 {
+		for i := 1; i < len(val); i++ {
+			optname := val[i : i+1]
+			opt, ok := c.parser.opts[optname]
+			if ok {
+				r = append(r, opt.String())
+				if opt.Nargs > 0 && i != len(val)-1 {
+					r = append(r, val[i+1:])
+					return r
+				}
+			} else {
+				r = append(r, "-"+optname)
+			}
+		}
+	}
+
+	if len(r) == 0 {
+		r = append(r, val)
+	}
+
+	return r
 }
