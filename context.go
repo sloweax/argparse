@@ -125,14 +125,14 @@ func (c *Context) getOption(val string) (*Option, error) {
 		optname := val[2:]
 		opt, ok := c.parser.opts[optname]
 		if !ok || len(opt.Name) == 1 {
-			return nil, fmt.Errorf("unknown option %q", val)
+			return nil, fmt.Errorf("unknown option %q", optname)
 		}
 		return opt, nil
 	} else if strings.HasPrefix(val, "-") && len(val) > 1 {
 		optname := val[1:]
 		opt, ok := c.parser.opts[optname]
 		if !ok {
-			return nil, fmt.Errorf("unknown option %q", val)
+			return nil, fmt.Errorf("unknown option %q", optname)
 		}
 		return opt, nil
 	}
