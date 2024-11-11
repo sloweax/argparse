@@ -125,7 +125,7 @@ func TestAbort(t *testing.T) {
 	parser.AddOption(Option{Name: "a"})
 
 	rest := make([]string, 0)
-	parser.Unparceable(func(ctx *Context, s string) {
+	parser.Unparceable(func(ctx *Context, s string, e error) {
 		ctx.Abort()
 		assertEqual(t, s, "-b")
 		rest = append(rest, ctx.Remain()...)

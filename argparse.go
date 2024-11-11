@@ -20,7 +20,7 @@ type ArgParser struct {
 	SubParser     *ArgParser
 	SubParserName string
 
-	unparceable func(*Context, string)
+	unparceable func(*Context, string, error)
 }
 
 func New() *ArgParser {
@@ -71,7 +71,7 @@ func (a *ArgParser) ParseArgs() error {
 	return a.Parse(os.Args[1:]...)
 }
 
-func (a *ArgParser) Unparceable(callback func(*Context, string)) {
+func (a *ArgParser) Unparceable(callback func(*Context, string, error)) {
 	a.unparceable = callback
 }
 

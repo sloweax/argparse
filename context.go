@@ -74,7 +74,7 @@ func (c *Context) parse() error {
 		opt, err := c.getOption(c.Peek())
 		if err != nil {
 			if c.parser.unparceable != nil {
-				c.parser.unparceable(c, c.Peek())
+				c.parser.unparceable(c, c.Peek(), err)
 				c.Skip()
 				continue
 			}
