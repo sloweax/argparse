@@ -149,7 +149,11 @@ func (c *Context) getOption(val string) (*Option, error) {
 		return c.parser.pos[len(c.parser.pos)-1], nil
 	}
 
-	return nil, fmt.Errorf("could not parse option %q", val)
+	if strings.HasPrefix(val, "-") {
+		return nil, fmt.Errorf("unknown option %q", val)
+	} else {
+		return nil, fmt.Errorf("unexpected operand %q", val)
+	}
 }
 
 func (c *Context) Remain() []string {
