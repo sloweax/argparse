@@ -153,7 +153,9 @@ func (c *Context) getOption(val string) (*Option, error) {
 }
 
 func (c *Context) Remain() []string {
-	return c.args
+	tmp := make([]string, 0, c.Remaining())
+	tmp = append(tmp, c.args...)
+	return tmp
 }
 
 func (c *Context) Remaining() int {
