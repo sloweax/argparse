@@ -169,12 +169,6 @@ func FromStruct(s any) *ArgParser {
 			switch fv.Type().Kind() {
 			case reflect.Struct:
 				switch opttype {
-				case "":
-					parser.AddOption(OptionFromStruct(name, fv.Addr().Interface()))
-				case "positional":
-					opt := OptionFromStruct(name, fv.Addr().Interface())
-					opt.Positional = true
-					parser.AddOption(opt)
 				case "subparser":
 					parser.AddSubParser(name, FromStruct(fv.Addr().Interface()))
 				default:
