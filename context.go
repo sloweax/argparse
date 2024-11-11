@@ -181,15 +181,11 @@ func (c *Context) expand(val string) []string {
 	} else if strings.HasPrefix(val, "-") && len(val) > 1 {
 		for i := 1; i < len(val); i++ {
 			optname := val[i : i+1]
+			r = append(r, "-"+optname)
 			opt, ok := c.parser.opts[optname]
-			if ok {
-				r = append(r, opt.String())
-				if opt.Nargs > 0 && i != len(val)-1 {
-					r = append(r, val[i+1:])
-					return r
-				}
-			} else {
-				r = append(r, "-"+optname)
+			if ((ok && opt.Nargs > 0) || optname == "-") && i != len(val)-1 {
+				r = append(r, val[i+1:])
+				return r
 			}
 		}
 	}
