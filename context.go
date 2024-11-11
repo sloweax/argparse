@@ -99,7 +99,9 @@ func (c *Context) parse() error {
 
 		if c.Remaining() < nargs {
 			if c.parser.unparceable != nil {
+				c.opt = opt
 				c.parser.unparceable(c, c.Peek())
+				c.opt = nil
 				c.Skip()
 				continue
 			} else {
