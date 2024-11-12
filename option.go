@@ -30,9 +30,7 @@ func (o *Option) string() string {
 	tmp := o.String()
 
 	if o.Positional && len(o.Metavar) > 0 {
-		if len(o.Metavar) > 0 {
-			tmp = o.Metavar
-		}
+		tmp = o.Metavar
 	}
 
 	if o.Nargs > 0 && !o.Positional {
