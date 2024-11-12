@@ -28,11 +28,11 @@ func (c *Context) AbortWithError(err error) {
 	c.err = err
 }
 
-func (c *Context) Skip() {
-	if c.Remaining() == 0 {
-		panic("Skip() with nothing left")
+func (c *Context) Skip(n int) {
+	if c.Remaining() < n {
+		panic("Skip() out of range")
 	}
-	c.args = c.args[1:]
+	c.args = c.args[n:]
 }
 
 func (c *Context) Peek() string {
@@ -75,7 +75,7 @@ func (c *Context) parse() error {
 		if err != nil {
 			if c.parser.unparceable != nil {
 				c.parser.unparceable(c, c.Peek(), err)
-				c.Skip()
+				c.Skip(1)
 				continue
 			}
 			return err
@@ -84,12 +84,12 @@ func (c *Context) parse() error {
 		if opt == nil {
 			c.parser.SubParserName = c.Peek()
 			c.parser.SubParser = c.parser.subparsers[c.Peek()]
-			c.Skip()
+			c.Skip(1)
 			return c.parser.SubParser.Parse(c.Remain()...)
 		}
 
 		if !opt.Positional {
-			c.Skip()
+			c.Skip(1)
 		}
 
 		nargs := opt.Nargs
@@ -111,6 +111,8 @@ func (c *Context) parse() error {
 			c.opt = opt
 			opt.Callback(c, c.NextN(nargs)...)
 			c.opt = nil
+		} else {
+			c.Skip(nargs)
 		}
 
 		if c.err != nil {
