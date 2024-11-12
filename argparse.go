@@ -117,7 +117,7 @@ func FromStruct(s any) *ArgParser {
 		fv := v.Field(i)
 		ft := t.Field(i)
 
-		if len(ft.Name) == 0 || unicode.IsLower(rune(ft.Name[0])) {
+		if !ft.IsExported() {
 			continue
 		}
 
