@@ -28,6 +28,13 @@ func (o *Option) String() string {
 
 func (o *Option) string() string {
 	tmp := o.String()
+
+	if o.Positional && len(o.Metavar) > 0 {
+		if len(o.Metavar) > 0 {
+			tmp = o.Metavar
+		}
+	}
+
 	if o.Nargs > 0 && !o.Positional {
 		metavar := o.Metavar
 		if len(metavar) == 0 {
@@ -35,9 +42,11 @@ func (o *Option) string() string {
 		}
 		tmp += " " + metavar
 	}
+
 	if !o.Required {
 		tmp = "[" + tmp + "]"
 	}
+
 	return tmp
 }
 
