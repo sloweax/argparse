@@ -121,7 +121,7 @@ func FromStruct(s any) *ArgParser {
 			continue
 		}
 
-		if tmp, ok := ft.Tag.Lookup("ignore"); ok {
+		if tmp, ok := ft.Tag.Lookup("ignored"); ok {
 			if skip, err := strconv.ParseBool(tmp); err != nil {
 				panic(err)
 			} else if skip {
