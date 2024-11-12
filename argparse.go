@@ -96,7 +96,7 @@ func (a *ArgParser) Parse(args ...string) error {
 
 	required := make([]string, 0)
 	for _, opt := range a.opts {
-		if opt.Required && !opt.set {
+		if opt.Required && !opt.set && len(opt.basealias) == 0 {
 			required = append(required, opt.String())
 		}
 	}
