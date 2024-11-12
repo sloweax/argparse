@@ -3,8 +3,12 @@ package argparse
 type Option struct {
 	Name       string
 	Nargs      int
-	Callback   func(ctx *Context, args ...string)
 	Positional bool
+	Callback   func(ctx *Context, args ...string)
+
+	Required bool
+
+	set bool
 }
 
 func (o *Option) String() string {
@@ -17,4 +21,9 @@ func (o *Option) String() string {
 	}
 
 	return "--" + o.Name
+}
+
+func (o Option) SetRequired(val bool) Option {
+	o.Required = val
+	return o
 }

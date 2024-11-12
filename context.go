@@ -114,6 +114,7 @@ func (c *Context) parse() error {
 		} else {
 			c.Skip(nargs)
 		}
+		opt.set = true
 
 		if c.err != nil {
 			break

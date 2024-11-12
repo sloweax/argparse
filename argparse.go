@@ -1,6 +1,7 @@
 package argparse
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"strconv"
@@ -65,7 +66,32 @@ func (a *ArgParser) AddOptionWithAlias(opt Option, aliases ...string) {
 
 func (a *ArgParser) Parse(args ...string) error {
 	a.ctx = &Context{args: args, parser: a}
-	return a.ctx.parse()
+	err := a.ctx.parse()
+	if err != nil {
+		return err
+	}
+
+	required := make([]string, 0)
+	for _, opt := range a.opts {
+		if opt.Required && !opt.set {
+			required = append(required, opt.String())
+		}
+	}
+
+	for _, opt := range a.pos {
+		if opt.Required && !opt.set {
+			required = append(required, opt.String())
+		}
+	}
+
+	if len(required) > 0 {
+		if len(required) == 1 {
+			return fmt.Errorf("option %s is required", required[0])
+		}
+		return fmt.Errorf("the following options are required: %s", strings.Join(required, ", "))
+	}
+
+	return nil
 }
 
 func (a *ArgParser) ParseArgs() error {
@@ -103,6 +129,18 @@ func FromStruct(s any) *ArgParser {
 			}
 		}
 
+		var (
+			required bool
+		)
+
+		if tmp, ok := ft.Tag.Lookup("required"); ok {
+			if r, err := strconv.ParseBool(tmp); err != nil {
+				panic(err)
+			} else if r {
+				required = r
+			}
+		}
+
 		name := ""
 		if tmp, ok := ft.Tag.Lookup("name"); ok {
 			name = tmp
@@ -121,43 +159,43 @@ func FromStruct(s any) *ArgParser {
 		case string:
 			switch opttype {
 			case "":
-				parser.AddOptionWithAlias(String(name, (*string)(fv.Addr().UnsafePointer())), aliases...)
+				parser.AddOptionWithAlias(String(name, (*string)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
 			case "positional":
-				parser.AddOption(StringPositional(name, (*string)(fv.Addr().UnsafePointer())))
+				parser.AddOption(StringPositional(name, (*string)(fv.Addr().UnsafePointer())).SetRequired(required))
 			default:
 				panic("unsupported type")
 			}
 		case *string:
 			switch opttype {
 			case "":
-				parser.AddOptionWithAlias(StringAddr(name, (**string)(fv.Addr().UnsafePointer())), aliases...)
+				parser.AddOptionWithAlias(StringAddr(name, (**string)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
 			case "positional":
-				parser.AddOption(StringAddrPositional(name, (**string)(fv.Addr().UnsafePointer())))
+				parser.AddOption(StringAddrPositional(name, (**string)(fv.Addr().UnsafePointer())).SetRequired(required))
 			default:
 				panic("unsupported type")
 			}
 		case []string:
 			switch opttype {
 			case "":
-				parser.AddOptionWithAlias(StringAppend(name, (*[]string)(fv.Addr().UnsafePointer())), aliases...)
+				parser.AddOptionWithAlias(StringAppend(name, (*[]string)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
 			case "positional":
-				parser.AddOption(StringAppendPositional(name, (*[]string)(fv.Addr().UnsafePointer())))
+				parser.AddOption(StringAppendPositional(name, (*[]string)(fv.Addr().UnsafePointer())).SetRequired(required))
 			default:
 				panic("unsupported type")
 			}
 		case bool:
 			switch opttype {
 			case "":
-				parser.AddOptionWithAlias(Bool(name, (*bool)(fv.Addr().UnsafePointer())), aliases...)
+				parser.AddOptionWithAlias(Bool(name, (*bool)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
 			default:
 				panic("unsupported type")
 			}
 		case int:
 			switch opttype {
 			case "":
-				parser.AddOptionWithAlias(Int(name, (*int)(fv.Addr().UnsafePointer())), aliases...)
+				parser.AddOptionWithAlias(Int(name, (*int)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
 			case "positional":
-				parser.AddOption(IntPositional(name, (*int)(fv.Addr().UnsafePointer())))
+				parser.AddOption(IntPositional(name, (*int)(fv.Addr().UnsafePointer())).SetRequired(required))
 			default:
 				panic("unsupported type")
 			}
