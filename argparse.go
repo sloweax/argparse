@@ -78,6 +78,9 @@ func (a *ArgParser) AddOption(opt Option) {
 }
 
 func (a *ArgParser) AddOptionWithAlias(opt Option, aliases ...string) {
+	if opt.Positional {
+		panic("positional cant have alias")
+	}
 	a.AddOption(opt)
 	opt.basealias = opt.Name
 	for _, alias := range aliases {
