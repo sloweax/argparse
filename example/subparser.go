@@ -7,11 +7,11 @@ import (
 	"github.com/sloweax/argparse"
 )
 
-// $ go run . --prefix cool- add -f file
+// $ go run . --prefix cool- add file
 // adding file cool-file
 
-// $ go run . --prefix bad- del -f file
-// deleting file bad-file
+// $ go run . --prefix very- del bad-file
+// deleting file very-bad-file
 
 func main() {
 	parser := argparse.New()
@@ -25,8 +25,8 @@ func main() {
 	parser.AddOption(argparse.String("prefix", &prefix))
 
 	file := ""
-	add_parser.AddOption(argparse.String("file", &file))
-	del_parser.AddOption(argparse.String("file", &file))
+	add_parser.AddOption(argparse.StringPositional("file", &file).SetRequired(true))
+	del_parser.AddOption(argparse.StringPositional("file", &file).SetRequired(true))
 
 	if err := parser.ParseArgs(); err != nil {
 		fmt.Println(err)
