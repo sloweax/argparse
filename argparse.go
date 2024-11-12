@@ -157,50 +157,50 @@ func (a *ArgParser) LoadStruct(s any) {
 		case string:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(String(name, (*string)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(String(name, fv.Addr().Interface().(*string)).SetRequired(required), aliases...)
 			case "positional":
-				a.AddOption(StringPositional(name, (*string)(fv.Addr().UnsafePointer())).SetRequired(required))
+				a.AddOption(StringPositional(name, fv.Addr().Interface().(*string)).SetRequired(required))
 			default:
 				panic("unsupported type")
 			}
 		case *string:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(StringAddr(name, (**string)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(StringAddr(name, fv.Addr().Interface().(**string)).SetRequired(required), aliases...)
 			case "positional":
-				a.AddOption(StringAddrPositional(name, (**string)(fv.Addr().UnsafePointer())).SetRequired(required))
+				a.AddOption(StringAddrPositional(name, fv.Addr().Interface().(**string)).SetRequired(required))
 			default:
 				panic("unsupported type")
 			}
 		case []string:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(StringAppend(name, (*[]string)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(StringAppend(name, fv.Addr().Interface().(*[]string)).SetRequired(required), aliases...)
 			case "positional":
-				a.AddOption(StringAppendPositional(name, (*[]string)(fv.Addr().UnsafePointer())).SetRequired(required))
+				a.AddOption(StringAppendPositional(name, fv.Addr().Interface().(*[]string)).SetRequired(required))
 			default:
 				panic("unsupported type")
 			}
 		case bool:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(Bool(name, (*bool)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(Bool(name, fv.Addr().Interface().(*bool)).SetRequired(required), aliases...)
 			default:
 				panic("unsupported type")
 			}
 		case int:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(Int(name, (*int)(fv.Addr().UnsafePointer())).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(Int(name, fv.Addr().Interface().(*int)).SetRequired(required), aliases...)
 			case "positional":
-				a.AddOption(IntPositional(name, (*int)(fv.Addr().UnsafePointer())).SetRequired(required))
+				a.AddOption(IntPositional(name, fv.Addr().Interface().(*int)).SetRequired(required))
 			default:
 				panic("unsupported type")
 			}
 		case ArgParser:
-			a.AddSubParser(name, (*ArgParser)(fv.Addr().UnsafePointer()))
+			a.AddSubParser(name, fv.Addr().Interface().(*ArgParser))
 		case *ArgParser:
-			a.AddSubParser(name, (*ArgParser)(fv.UnsafePointer()))
+			a.AddSubParser(name, fv.Interface().(*ArgParser))
 		default:
 			if ft.Type.Kind() == reflect.Pointer {
 				fv = fv.Elem()
