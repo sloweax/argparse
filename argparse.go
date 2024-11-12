@@ -3,6 +3,7 @@ package argparse
 import (
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -95,7 +96,9 @@ func FromStruct(s any) *ArgParser {
 		}
 
 		if tmp, ok := ft.Tag.Lookup("ignore"); ok {
-			if strings.HasPrefix(strings.ToLower(tmp), "y") {
+			if skip, err := strconv.ParseBool(tmp); err != nil {
+				panic(err)
+			} else if skip {
 				continue
 			}
 		}
