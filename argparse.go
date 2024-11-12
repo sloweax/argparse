@@ -4,12 +4,20 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
+var (
+	BreakLineThreshold = 80
+)
+
 type ArgParser struct {
+	Name        string
+	Description string
+
 	ctx *Context
 
 	opts map[string]*Option
@@ -23,6 +31,8 @@ type ArgParser struct {
 	SubParserName string
 
 	unparceable func(*Context, string, error)
+
+	optcounter int
 }
 
 func New() *ArgParser {
@@ -32,7 +42,19 @@ func New() *ArgParser {
 	return a
 }
 
+func NewWithDefaults() *ArgParser {
+	a := New()
+	a.Name = os.Args[0]
+	a.AddOptionWithAlias(Option{Name: "h", Description: "shows usage and exits", Callback: func(ctx *Context, args ...string) {
+		fmt.Print(a.Usage())
+		os.Exit(0)
+	}}, "help")
+	return a
+}
+
 func (a *ArgParser) AddOption(opt Option) {
+	opt.sort = a.optcounter
+	a.optcounter++
 	if len(opt.Name) == 0 {
 		panic("cant have option without name")
 	}
@@ -57,6 +79,7 @@ func (a *ArgParser) AddOption(opt Option) {
 
 func (a *ArgParser) AddOptionWithAlias(opt Option, aliases ...string) {
 	a.AddOption(opt)
+	opt.basealias = opt.Name
 	for _, alias := range aliases {
 		tmp := opt
 		tmp.Name = alias
@@ -103,6 +126,7 @@ func (a *ArgParser) Unparceable(callback func(*Context, string, error)) {
 }
 
 func (a *ArgParser) AddSubParser(name string, p *ArgParser) {
+	p.Name = a.Name + " " + name
 	a.subparsers[name] = p
 }
 
@@ -129,6 +153,7 @@ func (a *ArgParser) LoadStruct(s any) {
 
 		var (
 			required bool
+			name     string
 		)
 
 		if tmp, ok := ft.Tag.Lookup("required"); ok {
@@ -139,7 +164,6 @@ func (a *ArgParser) LoadStruct(s any) {
 			}
 		}
 
-		name := ""
 		if tmp, ok := ft.Tag.Lookup("name"); ok {
 			name = tmp
 		} else {
@@ -152,48 +176,50 @@ func (a *ArgParser) LoadStruct(s any) {
 		}
 
 		opttype, _ := ft.Tag.Lookup("type")
+		description, _ := ft.Tag.Lookup("description")
+		metavar, _ := ft.Tag.Lookup("metavar")
 
 		switch fv.Interface().(type) {
 		case string:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(String(name, fv.Addr().Interface().(*string)).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(String(name, fv.Addr().Interface().(*string)).SetAll(required, description, metavar), aliases...)
 			case "positional":
-				a.AddOption(StringPositional(name, fv.Addr().Interface().(*string)).SetRequired(required))
+				a.AddOption(StringPositional(name, fv.Addr().Interface().(*string)).SetAll(required, description, metavar))
 			default:
 				panic("unsupported type")
 			}
 		case *string:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(StringAddr(name, fv.Addr().Interface().(**string)).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(StringAddr(name, fv.Addr().Interface().(**string)).SetAll(required, description, metavar), aliases...)
 			case "positional":
-				a.AddOption(StringAddrPositional(name, fv.Addr().Interface().(**string)).SetRequired(required))
+				a.AddOption(StringAddrPositional(name, fv.Addr().Interface().(**string)).SetAll(required, description, metavar))
 			default:
 				panic("unsupported type")
 			}
 		case []string:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(StringAppend(name, fv.Addr().Interface().(*[]string)).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(StringAppend(name, fv.Addr().Interface().(*[]string)).SetAll(required, description, metavar), aliases...)
 			case "positional":
-				a.AddOption(StringAppendPositional(name, fv.Addr().Interface().(*[]string)).SetRequired(required))
+				a.AddOption(StringAppendPositional(name, fv.Addr().Interface().(*[]string)).SetAll(required, description, metavar))
 			default:
 				panic("unsupported type")
 			}
 		case bool:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(Bool(name, fv.Addr().Interface().(*bool)).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(Bool(name, fv.Addr().Interface().(*bool)).SetAll(required, description, metavar), aliases...)
 			default:
 				panic("unsupported type")
 			}
 		case int:
 			switch opttype {
 			case "":
-				a.AddOptionWithAlias(Int(name, fv.Addr().Interface().(*int)).SetRequired(required), aliases...)
+				a.AddOptionWithAlias(Int(name, fv.Addr().Interface().(*int)).SetAll(required, description, metavar), aliases...)
 			case "positional":
-				a.AddOption(IntPositional(name, fv.Addr().Interface().(*int)).SetRequired(required))
+				a.AddOption(IntPositional(name, fv.Addr().Interface().(*int)).SetAll(required, description, metavar))
 			default:
 				panic("unsupported type")
 			}
@@ -209,7 +235,9 @@ func (a *ArgParser) LoadStruct(s any) {
 			case reflect.Struct:
 				switch opttype {
 				case "subparser":
-					a.AddSubParser(name, FromStruct(fv.Addr().Interface()))
+					sub := FromStruct(fv.Addr().Interface())
+					sub.Description = description
+					a.AddSubParser(name, sub)
 				default:
 					panic("unsupported type")
 				}
@@ -221,9 +249,150 @@ func (a *ArgParser) LoadStruct(s any) {
 }
 
 func FromStruct(s any) *ArgParser {
-	parser := New()
+	parser := NewWithDefaults()
 	parser.LoadStruct(s)
 	return parser
+}
+
+func (a *ArgParser) Options() []*Option {
+	opts := make([]*Option, 0, len(a.opts)+len(a.pos))
+	for _, opt := range a.opts {
+		opts = append(opts, opt)
+	}
+	opts = append(opts, a.pos...)
+	sort.Slice(opts, func(i, j int) bool {
+		return opts[i].sort < opts[j].sort
+	})
+	return opts
+}
+
+func (a *ArgParser) Aliases() [][]*Option {
+	opts := a.Options()
+	if len(opts) == 0 {
+		return [][]*Option{}
+	}
+
+	aliases := make([][]*Option, 0)
+	alias := make([]*Option, 0)
+
+	for _, opt := range opts {
+		if len(opt.basealias) == 0 {
+			if len(alias) > 0 {
+				sort.Slice(alias, func(i, j int) bool {
+					return alias[i].Name < alias[j].Name
+				})
+				tmp := make([]*Option, 0, len(alias))
+				tmp = append(tmp, alias...)
+				aliases = append(aliases, tmp)
+			}
+			alias = alias[:0]
+		}
+		alias = append(alias, opt)
+	}
+
+	if len(alias) > 0 {
+		sort.Slice(alias, func(i, j int) bool {
+			return alias[i].Name < alias[j].Name
+		})
+		aliases = append(aliases, alias)
+	}
+
+	return aliases
+}
+
+func (a *ArgParser) String() string {
+	opts := a.Options()
+
+	strs := make([]string, 0)
+	for _, opt := range opts {
+		if len(opt.basealias) != 0 {
+			continue
+		}
+		strs = append(strs, opt.string())
+	}
+
+	if len(a.subparsers) > 0 {
+		strs = append(strs, "<command>")
+	}
+	str := fmt.Sprintf("usage: %s ", a.Name)
+
+	if len(strs) == 0 {
+		return str[:len(str)-1] + "\n"
+	}
+
+	return formatString(str, len(str), BreakLineThreshold, false, strs...)
+}
+
+func (a *ArgParser) Usage() string {
+	b := &strings.Builder{}
+	b.WriteString(a.String())
+	if len(a.Description) > 0 {
+		b.WriteRune('\n')
+		b.WriteString(formatString("", 0, BreakLineThreshold, false, strings.FieldsFunc(a.Description, unicode.IsSpace)...))
+	}
+
+	strs := make([]string, 0)
+	aliases := a.Aliases()
+	for _, alias := range aliases {
+		tmp := make([]string, 0)
+		for i, opt := range alias {
+			if i == len(alias)-1 && opt.Nargs > 0 && !opt.Positional {
+				metavar := opt.Metavar
+				if len(metavar) == 0 {
+					metavar = "var"
+				}
+				tmp = append(tmp, fmt.Sprintf("%s %s", opt.String(), metavar))
+			} else {
+				tmp = append(tmp, opt.String())
+			}
+		}
+		strs = append(strs, "    "+strings.Join(tmp, ", "))
+	}
+
+	max := 0
+	for _, s := range strs {
+		if len(s) > max {
+			max = len(s)
+		}
+	}
+	max += 5
+
+	if len(strs) > 0 {
+		b.WriteString("\noptions:\n")
+	}
+
+	for i, s := range strs {
+		if len(aliases[i][0].Description) > 0 {
+			pad := max - len(s)
+			for i := 0; i < pad; i++ {
+				s += " "
+			}
+			b.WriteString(formatString(s, len(s), BreakLineThreshold, false, strings.FieldsFunc(aliases[i][0].Description, unicode.IsSpace)...))
+		} else {
+			b.WriteString(s)
+			b.WriteRune('\n')
+		}
+	}
+
+	if len(a.subparsers) > 0 {
+		b.WriteString("\ncommands:\n")
+	}
+
+	for subname, sub := range a.subparsers {
+		str := "    " + subname
+		if len(sub.Description) > 0 {
+			pad := max - len(str)
+			for i := 0; i < pad; i++ {
+				str += " "
+			}
+			b.WriteString(formatString(str, len(str), BreakLineThreshold, false, strings.FieldsFunc(sub.Description, unicode.IsSpace)...))
+		} else {
+			b.WriteString(str)
+			b.WriteRune('\n')
+		}
+	}
+
+	return b.String()
 }
 
 func camelCaseToDashed(a string) string {
@@ -237,4 +406,36 @@ func camelCaseToDashed(a string) string {
 		r.WriteRune(unicode.ToLower(c))
 	}
 	return r.String()
+}
+
+func formatString(linestart string, padlen, breakline int, pad bool, ss ...string) string {
+	line := linestart
+	b := &strings.Builder{}
+	for _, s := range ss {
+		line += s + " "
+
+		if (pad && len(line)+padlen > breakline) || (!pad && len(line) > breakline) {
+			if pad {
+				for i := 0; i < padlen; i++ {
+					b.WriteRune(' ')
+				}
+			}
+			b.WriteString(strings.TrimRightFunc(line, unicode.IsSpace))
+			b.WriteRune('\n')
+			pad = true
+			line = ""
+		}
+	}
+
+	if len(line) > 0 {
+		if pad {
+			for i := 0; i < padlen; i++ {
+				b.WriteRune(' ')
+			}
+		}
+		b.WriteString(line)
+		b.WriteRune('\n')
+	}
+
+	return b.String()
 }

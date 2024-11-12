@@ -16,8 +16,18 @@ import (
 // $ go run . -s abc --long 123 xyz
 // verbose=false short=abc long=123 positional=xyz
 
+// $ go run . --help
+// usage: ./basic [-h] [-v] [-s var] [--long var] [positional]
+//
+// options:
+//     -h, --help     shows usage and exits
+//     -v
+//     -s var
+//     --long var
+//     positional
+
 func main() {
-	parser := argparse.New()
+	parser := argparse.NewWithDefaults()
 
 	verbose := false
 	short := ""

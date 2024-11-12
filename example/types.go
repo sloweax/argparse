@@ -16,7 +16,7 @@ import (
 // exit status 1
 
 func main() {
-	parser := argparse.New()
+	parser := argparse.NewWithDefaults()
 
 	v1 := 0
 	v2 := 0

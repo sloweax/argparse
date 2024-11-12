@@ -11,7 +11,7 @@ import (
 // flag=true args=[a b c d]
 
 func main() {
-	parser := argparse.New()
+	parser := argparse.NewWithDefaults()
 
 	flag := false
 	parser.AddOption(argparse.Bool("f", &flag))

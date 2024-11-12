@@ -12,7 +12,7 @@ import (
 // cmd=[ssh root@host --foo abc]
 
 func main() {
-	parser := argparse.New()
+	parser := argparse.NewWithDefaults()
 
 	foo := ""
 	parser.AddOption(argparse.String("foo", &foo))

@@ -14,9 +14,9 @@ import (
 // deleting file very-bad-file
 
 func main() {
-	parser := argparse.New()
-	add_parser := argparse.New()
-	del_parser := argparse.New()
+	parser := argparse.NewWithDefaults()
+	add_parser := argparse.NewWithDefaults()
+	del_parser := argparse.NewWithDefaults()
 
 	parser.AddSubParser("add", add_parser)
 	parser.AddSubParser("del", del_parser)
