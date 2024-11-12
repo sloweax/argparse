@@ -27,3 +27,8 @@ func (o Option) SetRequired(val bool) Option {
 	o.Required = val
 	return o
 }
+
+func (o Option) SetPositional(val bool) Option {
+	o.Positional = val
+	return o
+}

@@ -32,15 +32,11 @@ func StringAppend(name string, v *[]string) Option {
 }
 
 func StringPositional(name string, v *string) Option {
-	return Option{Name: name, Positional: true, Nargs: 1, Callback: func(ctx *Context, args ...string) {
-		*v = args[0]
-	}}
+	return String(name, v).SetPositional(true)
 }
 
 func StringAddrPositional(name string, v **string) Option {
-	return Option{Name: name, Positional: true, Nargs: 1, Callback: func(ctx *Context, args ...string) {
-		*v = &args[0]
-	}}
+	return StringAddr(name, v).SetPositional(true)
 }
 
 func StringAppendPositional(name string, v *[]string) Option {
@@ -89,13 +85,7 @@ func Int(name string, v *int) Option {
 }
 
 func IntPositional(name string, v *int) Option {
-	return Option{Name: name, Nargs: 1, Positional: true, Callback: func(ctx *Context, args ...string) {
-		if num, err := strconv.Atoi(args[0]); err != nil {
-			ctx.AbortWithError(fmt.Errorf("option %s %q requires an integer", ctx.Option().String(), args[0]))
-		} else {
-			*v = num
-		}
-	}}
+	return Int(name, v).SetPositional(true)
 }
 
 func Func(name string, f func()) Option {
