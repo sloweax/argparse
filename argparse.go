@@ -226,6 +226,13 @@ func (a *ArgParser) LoadStruct(s any) {
 			default:
 				panic("unsupported type")
 			}
+		case uint:
+			switch opttype {
+			case "":
+				a.AddOptionWithAlias(Uint(name, fv.Addr().Interface().(*uint)).SetAll(required, description, metavar), aliases...)
+			default:
+				panic("unsupported type")
+			}
 		case ArgParser:
 			a.AddSubParser(name, fv.Addr().Interface().(*ArgParser))
 		case *ArgParser:

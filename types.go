@@ -84,6 +84,16 @@ func Int(name string, v *int) Option {
 	}}
 }
 
+func Uint(name string, v *uint) Option {
+	return Option{Name: name, Nargs: 1, Callback: func(ctx *Context, args ...string) {
+		if num, err := strconv.ParseUint(args[0], 10, 0); err != nil {
+			ctx.AbortWithError(fmt.Errorf("option %s %q requires an unsigned integer", ctx.Option().String(), args[0]))
+		} else {
+			*v = uint(num)
+		}
+	}}
+}
+
 func IntPositional(name string, v *int) Option {
 	return Int(name, v).SetPositional(true)
 }
