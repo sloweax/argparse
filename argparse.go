@@ -288,12 +288,6 @@ func (a *ArgParser) Aliases() [][]*Option {
 	for _, opt := range opts {
 		if len(opt.basealias) == 0 {
 			if len(alias) > 0 {
-				sort.Slice(alias, func(i, j int) bool {
-					if len(alias[i].Name) != len(alias[j].Name) {
-						return len(alias[i].Name) < len(alias[j].Name)
-					}
-					return alias[i].Name < alias[j].Name
-				})
 				tmp := make([]*Option, 0, len(alias))
 				tmp = append(tmp, alias...)
 				aliases = append(aliases, tmp)
@@ -304,12 +298,6 @@ func (a *ArgParser) Aliases() [][]*Option {
 	}
 
 	if len(alias) > 0 {
-		sort.Slice(alias, func(i, j int) bool {
-			if len(alias[i].Name) != len(alias[j].Name) {
-				return len(alias[i].Name) < len(alias[j].Name)
-			}
-			return alias[i].Name < alias[j].Name
-		})
 		aliases = append(aliases, alias)
 	}
 
