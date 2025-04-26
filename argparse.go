@@ -24,7 +24,8 @@ type ArgParser struct {
 	// positionals
 	pos []*Option
 
-	subparsers map[string]*ArgParser
+	subparsers     map[string]*ArgParser
+	subparsercount int
 
 	// selected subparser
 	SubParser     *ArgParser
@@ -130,6 +131,8 @@ func (a *ArgParser) Unparceable(callback func(*Context, string, error)) {
 
 func (a *ArgParser) AddSubParser(name string, p *ArgParser) {
 	p.Name = a.Name + " " + name
+	p.subparsercount = a.subparsercount
+	a.subparsercount += 1
 	a.subparsers[name] = p
 }
 
@@ -382,7 +385,20 @@ func (a *ArgParser) Usage() string {
 		b.WriteString("\ncommands:\n")
 	}
 
-	for subname, sub := range a.subparsers {
+	subparsers := make([]string, 0, len(a.subparsers))
+
+	for name := range a.subparsers {
+		subparsers = append(subparsers, name)
+	}
+
+	sort.Slice(subparsers, func(i, j int) bool {
+		is := a.subparsers[subparsers[i]]
+		js := a.subparsers[subparsers[j]]
+		return is.subparsercount < js.subparsercount
+	})
+
+	for _, subname := range subparsers {
+		sub := a.subparsers[subname]
 		str := "    " + subname
 		if len(sub.Description) > 0 {
 			pad := max - len(str)
