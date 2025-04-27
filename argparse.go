@@ -210,6 +210,8 @@ func (a *ArgParser) LoadStruct(s any) {
 				a.AddOptionWithAlias(StringAppend(name, fv.Addr().Interface().(*[]string)).SetAll(required, description, metavar), aliases...)
 			case "positional":
 				a.AddOption(StringAppendPositional(name, fv.Addr().Interface().(*[]string)).SetAll(required, description, metavar))
+			case "rest-positional":
+				a.AddOption(StringRestPositional(name, fv.Addr().Interface().(*[]string)).SetAll(required, description, metavar))
 			default:
 				panic("unsupported type")
 			}
