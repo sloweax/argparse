@@ -98,6 +98,16 @@ func IntPositional(name string, v *int) Option {
 	return Int(name, v).SetPositional(true)
 }
 
+func IntAppendPositional(name string, v *[]int) Option {
+	return Option{Name: name, Positional: true, Nargs: -1, Callback: func(ctx *Context, args ...string) {
+		if num, err := strconv.Atoi(args[0]); err != nil {
+			ctx.AbortWithError(fmt.Errorf("option %s %q requires an integer", ctx.Option().String(), args[0]))
+		} else {
+			*v = append(*v, num)
+		}
+	}}
+}
+
 func Func(name string, f func()) Option {
 	return Option{Name: name, Callback: func(ctx *Context, args ...string) {
 		f()

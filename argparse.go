@@ -229,6 +229,13 @@ func (a *ArgParser) LoadStruct(s any) {
 			default:
 				panic("unsupported type")
 			}
+		case []int:
+			switch opttype {
+			case "positional":
+				a.AddOption(IntAppendPositional(name, fv.Addr().Interface().(*[]int)).SetAll(required, description, metavar))
+			default:
+				panic("unsupported type")
+			}
 		case uint:
 			switch opttype {
 			case "":
