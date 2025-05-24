@@ -140,16 +140,16 @@ func (c *Context) getOption(val string) (*Option, error) {
 		return opt, nil
 	}
 
-	if _, ok := c.parser.subparsers[val]; ok {
-		return nil, nil
-	}
-
 	if c.pindex < len(c.parser.pos) {
 		opt := c.parser.pos[c.pindex]
 		c.pindex++
 		return opt, nil
 	} else if len(c.parser.pos) > 0 && c.parser.pos[len(c.parser.pos)-1].Nargs < 0 {
 		return c.parser.pos[len(c.parser.pos)-1], nil
+	}
+
+	if _, ok := c.parser.subparsers[val]; ok {
+		return nil, nil
 	}
 
 	if strings.HasPrefix(val, "-") {
